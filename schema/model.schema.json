@@ -1,0 +1,620 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://doc-atlas/schema/model.schema.json",
+  "title": "doc-atlas model.json",
+  "description": "阶段二（信息梳理与多文件整合）产出的唯一中间表示（IR）。渲染器消费此对象生成 dashboard.html。顶层字段按需出现：缺省的可选模块不渲染。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["meta", "files", "outline", "chapters"],
+  "properties": {
+    "meta": { "$ref": "#/$defs/Meta" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/FileEntry" }
+    },
+    "file_relations": {
+      "description": "仅多文件场景使用的文件关系图。单文件可为 null 或省略。",
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/FileRelations" }
+      ]
+    },
+    "highlights": {
+      "type": "array",
+      "description": "首屏关键指标卡（4–6 个最关键数字），渲染为大号 hero 数字条。",
+      "items": { "$ref": "#/$defs/MetricItem" }
+    },
+    "distillation_report": {
+      "description": "炼化体检表：把「是否真的炼化」变成看得见的指标，交付时讲给用户。可省略。",
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/DistillationReport" }
+      ]
+    },
+    "conflicts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Conflict" }
+    },
+    "keypoints": {
+      "type": "array",
+      "description": "全局最重要的要点，建议 5–10 个。",
+      "items": { "$ref": "#/$defs/KeyPoint" }
+    },
+    "diagrams": {
+      "type": "array",
+      "description": "全局关系图区（Mermaid）。",
+      "items": { "$ref": "#/$defs/Diagram" }
+    },
+    "charts": {
+      "type": "array",
+      "description": "全局数据图表区（Chart.js）。",
+      "items": { "$ref": "#/$defs/Chart" }
+    },
+    "quotes": {
+      "type": "array",
+      "description": "金句卡片池，可被 chapter 内的 quote block 通过 quote_id 引用。",
+      "items": { "$ref": "#/$defs/Quote" }
+    },
+    "outline": {
+      "type": "array",
+      "description": "统一大纲树（合并后的主题树，非按文件罗列）。",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/OutlineNode" }
+    },
+    "chapters": {
+      "type": "array",
+      "description": "一级章节详情区，每个对应某个一级 OutlineNode。",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Chapter" }
+    }
+  },
+
+  "$defs": {
+    "Importance": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "Confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "Tone": {
+      "type": "string",
+      "enum": ["info", "warn", "success", "danger"]
+    },
+
+    "MetricItem": {
+      "type": "object",
+      "description": "一个大号关键指标：value 大字、label 说明，可选 sub 附注。",
+      "additionalProperties": false,
+      "required": ["value", "label"],
+      "properties": {
+        "value": { "type": "string", "description": "大字号数值，如 \"8 小时\" / \"< 3%\" / \"22 万\"。" },
+        "label": { "type": "string", "description": "数值含义，如 \"纯电驻车制冷\"。" },
+        "sub": {
+          "description": "可选附注（口径/条件），如 \"10 年累计 / 每车\"。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "importance": {
+          "oneOf": [{ "$ref": "#/$defs/Importance" }, { "type": "null" }]
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "DistillationReport": {
+      "type": "object",
+      "description": "炼化体检表。所有字段可选，给了就在面板「炼化体检」区展示。",
+      "additionalProperties": false,
+      "properties": {
+        "source_words": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+        "compression_ratio": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "section_coverage": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "claims_with_source": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "todo_ratio": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "derived_numbers": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+        "unmapped_source_blocks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fact_check": {
+          "description": "阶段二·五核查结论摘要，如「已核 23 条、修正 3 条、补回 2 条遗漏」。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        }
+      }
+    },
+
+    "SourceRef": {
+      "type": "object",
+      "description": "溯源引用。file_id 必须匹配某个 files[].id；已知时 page / loc 至少给一个。",
+      "additionalProperties": false,
+      "required": ["file_id"],
+      "properties": {
+        "file_id": { "type": "string" },
+        "page": {
+          "description": "有页码时的页码。",
+          "oneOf": [
+            { "type": "integer" },
+            { "type": "null" }
+          ]
+        },
+        "loc": {
+          "description": "无页码时的定位，如 \"§2.1\" / \"Slide 4\" / \"Sheet1!B2\"。",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+
+    "Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "content_lang", "stats", "executive_summary"],
+      "properties": {
+        "title": { "type": "string" },
+        "content_lang": {
+          "type": "string",
+          "description": "文档主要语言，如 \"zh\" / \"en\"。"
+        },
+        "ui_lang": {
+          "type": "string",
+          "description": "界面语言（跟随用户），缺省 = content_lang。"
+        },
+        "generated_at": {
+          "description": "ISO 日期，可为 null（渲染器可补）。",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file_count"],
+          "properties": {
+            "file_count": { "type": "integer" },
+            "total_pages": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+            "total_words": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+            "reading_minutes": { "oneOf": [{ "type": "integer" }, { "type": "null" }] }
+          }
+        },
+        "executive_summary": {
+          "type": "array",
+          "description": "执行摘要，3–5 句，至少 1 句。",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "FileEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "稳定 id，如 \"f1\"，被 SourceRef.file_id 引用。"
+        },
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "description": "文件类型，如 pdf|docx|pptx|xlsx|html|epub|md|…（不做封闭枚举）。"
+        },
+        "pages": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+        "words": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
+        "date": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "role": {
+          "description": "它在文件集中的角色（概述/最新版/时间序列起点…）。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        }
+      }
+    },
+
+    "FileRelations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mermaid"],
+      "properties": {
+        "mermaid": { "type": "string" },
+        "note": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+      }
+    },
+
+    "Conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "topic", "positions"],
+      "properties": {
+        "id": { "type": "string" },
+        "topic": { "type": "string" },
+        "positions": {
+          "type": "array",
+          "description": "同一主题下出处不同的说法，至少 2 个。",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "source"],
+            "properties": {
+              "value": { "type": "string" },
+              "source": { "$ref": "#/$defs/SourceRef" }
+            }
+          }
+        },
+        "resolution": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "confidence": {
+          "oneOf": [
+            { "$ref": "#/$defs/Confidence" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+
+    "KeyPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "importance", "sources"],
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "kind": {
+          "description": "分类标签，如 结论|数字|定义|风险|…。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "importance": { "$ref": "#/$defs/Importance" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "Diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "mermaid", "sources"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "kind": {
+          "description": "图类型，如 flowchart|mindmap|sequence|…。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "mermaid": { "type": "string" },
+        "caption": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "Chart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "chartjs", "sources"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "caption": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "chartjs": { "$ref": "#/$defs/ChartJsConfig" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "ChartJsConfig": {
+      "type": "object",
+      "description": "一个合法的 Chart.js 配置对象。",
+      "required": ["type", "data"],
+      "properties": {
+        "type": { "type": "string" },
+        "data": { "type": "object" },
+        "options": { "type": "object" }
+      }
+    },
+
+    "Quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "source"],
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "attribution": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "source": { "$ref": "#/$defs/SourceRef" }
+      }
+    },
+
+    "OutlineNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "importance", "sources"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "层级 id，如 \"1\" / \"1.1\" / \"1.2.1\"。"
+        },
+        "title": { "type": "string" },
+        "summary": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "importance": { "$ref": "#/$defs/Importance" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/OutlineNode" }
+        }
+      }
+    },
+
+    "Chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "importance", "sources", "blocks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "对应某个一级 OutlineNode 的 id。"
+        },
+        "title": { "type": "string" },
+        "importance": { "$ref": "#/$defs/Importance" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        },
+        "blocks": {
+          "type": "array",
+          "description": "有序区块，从 Block 调色板自由编排。",
+          "items": { "$ref": "#/$defs/Block" }
+        }
+      }
+    },
+
+    "Block": {
+      "oneOf": [
+        { "$ref": "#/$defs/ParagraphBlock" },
+        { "$ref": "#/$defs/CalloutBlock" },
+        { "$ref": "#/$defs/KeypointsBlock" },
+        { "$ref": "#/$defs/MetricBlock" },
+        { "$ref": "#/$defs/QuoteRefBlock" },
+        { "$ref": "#/$defs/QuoteInlineBlock" },
+        { "$ref": "#/$defs/DiagramRefBlock" },
+        { "$ref": "#/$defs/DiagramInlineBlock" },
+        { "$ref": "#/$defs/ChartRefBlock" },
+        { "$ref": "#/$defs/ChartInlineBlock" },
+        { "$ref": "#/$defs/TableBlock" },
+        { "$ref": "#/$defs/ImageBlock" },
+        { "$ref": "#/$defs/SubsectionsBlock" }
+      ]
+    },
+
+    "ParagraphBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "md"],
+      "properties": {
+        "type": { "const": "paragraph" },
+        "md": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "CalloutBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "tone", "md"],
+      "properties": {
+        "type": { "const": "callout" },
+        "tone": { "$ref": "#/$defs/Tone" },
+        "title": { "type": "string" },
+        "md": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "MetricBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "metric" },
+        "title": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/MetricItem" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "KeypointsBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "keypoints" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "importance"],
+            "properties": {
+              "text": { "type": "string" },
+              "importance": { "$ref": "#/$defs/Importance" },
+              "sources": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/SourceRef" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "QuoteRefBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "quote_id"],
+      "properties": {
+        "type": { "const": "quote" },
+        "quote_id": { "type": "string" }
+      }
+    },
+
+    "QuoteInlineBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "quote" },
+        "text": { "type": "string" },
+        "attribution": { "type": "string" },
+        "source": { "$ref": "#/$defs/SourceRef" }
+      }
+    },
+
+    "DiagramRefBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "diagram_id"],
+      "properties": {
+        "type": { "const": "diagram" },
+        "diagram_id": { "type": "string" }
+      }
+    },
+
+    "DiagramInlineBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "mermaid"],
+      "properties": {
+        "type": { "const": "diagram" },
+        "title": { "type": "string" },
+        "mermaid": { "type": "string" },
+        "caption": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "ChartRefBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "chart_id"],
+      "properties": {
+        "type": { "const": "chart" },
+        "chart_id": { "type": "string" }
+      }
+    },
+
+    "ChartInlineBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "chartjs"],
+      "properties": {
+        "type": { "const": "chart" },
+        "title": { "type": "string" },
+        "chartjs": { "$ref": "#/$defs/ChartJsConfig" },
+        "caption": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "TableBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "columns", "rows"],
+      "properties": {
+        "type": { "const": "table" },
+        "title": { "type": "string" },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": ["string", "number"]
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SourceRef" }
+        }
+      }
+    },
+
+    "ImageBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "src"],
+      "properties": {
+        "type": { "const": "image" },
+        "src": {
+          "type": "string",
+          "description": "workspace 下相对/绝对图片路径，渲染器读取并 base64 内嵌。"
+        },
+        "caption": { "type": "string" },
+        "source": { "$ref": "#/$defs/SourceRef" }
+      }
+    },
+
+    "SubsectionsBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "subsections" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "title", "summary", "importance", "sources"],
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "summary": { "type": "string" },
+              "importance": { "$ref": "#/$defs/Importance" },
+              "sources": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/SourceRef" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

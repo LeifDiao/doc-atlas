@@ -1,0 +1,14 @@
+# doc-atlas is a Claude Code skill (prose spec + helper scripts + a fixed HTML template),
+# not a code library — hide the GitHub "Languages" bar by excluding everything from
+# Linguist's language statistics.
+*.html  linguist-documentation
+*.md    linguist-documentation
+*.py    linguist-detectable=false
+*.sh    linguist-detectable=false
+*.json  linguist-detectable=false
+*.css   linguist-detectable=false
+*.js    linguist-detectable=false
+
+# Rendered dashboards are machine-generated output.
+examples/example-dashboard.html linguist-generated
+docs/sample-dashboard.html      linguist-generated

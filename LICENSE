@@ -1,0 +1,41 @@
+doc-atlas
+Copyright (c) 2026 Leif Diao
+
+Licensed under the Creative Commons Attribution-NonCommercial 4.0
+International License (CC BY-NC 4.0).
+
+You are free to:
+  • Share — copy and redistribute the material in any medium or format
+  • Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+  • Attribution — You must give appropriate credit to the original
+    repository (https://github.com/LeifDiao/doc-atlas), provide a link
+    to the license, and indicate if changes were made.
+  • NonCommercial — You may not use the material for commercial purposes.
+
+Commercial use — including but not limited to bundling doc-atlas into a paid
+product, paid SaaS hosting, internal use beyond individual scope inside a
+for-profit company, or selling dashboards/analyses produced with it — requires
+a separate commercial license.
+
+For commercial licensing, contact: leifdiao@gmail.com
+
+Full legal text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+────────────────────────────────────────────────────────────────────────
+
+中文说明（仅供理解，以英文条款为准）：
+
+doc-atlas 以 CC BY-NC 4.0 协议发布。
+
+  • ✅ 个人、教育、研究及任何非商业用途免费使用
+  • ✅ 欢迎 fork、修改、分享，但需标注原仓库并注明改动
+  • ❌ 商业用途（打包进付费产品、付费 SaaS 托管、营利公司内超个人范围使用、
+       基于本工具售卖面板/分析等）需单独获得商业授权
+
+商业授权请联系：leifdiao@gmail.com

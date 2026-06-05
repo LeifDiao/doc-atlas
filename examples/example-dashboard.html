@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light" data-paper="warm" data-accent="blue" data-bodyfont="sans" data-hl="on" data-density="airy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>doc-atlas</title>
+<!-- spec 允许的唯一两个外链：Chart.js 与 Mermaid（其余 CSS/JS 全部内联） -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+/* =====================================================================
+   doc-atlas · 纸本 (paper edition)
+   暖米白纸张 + 朱红墨印 + 衬线正文。重点突出，长文可读。
+   ===================================================================== */
+:root{ --sidebar-w:360px; }
+
+/* ---- 字体栈 ---- */
+:root{
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC","Noto Serif CJK SC",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --body-font:var(--serif);
+  --content-pad:clamp(28px,4.5vw,84px);
+  --measure:74ch;
+  --scale:1;
+}
+
+/* ---- 浅色：纸 ---- */
+html[data-theme="light"]{
+  --bg:#efe8d8;            /* 桌面/书桌色，比纸更深 */
+  --paper:#faf6ee;         /* 纸面 */
+  --panel:#fffdf7;         /* 抬起的卡片纸 */
+  --panel-2:#f1e9d9;       /* 凹陷/表头 */
+  --border:#e3d9c4;        /* 暖色发丝线 */
+  --rule:#cdbf9f;          /* 较重的分隔线 */
+  --text:#272019;          /* 墨黑（暖） */
+  --muted:#6a5f4e;         /* 次要 */
+  --faint:#998b73;         /* 极弱 */
+  --accent:#b23a2e;        /* 朱红墨 */
+  --accent-2:#9a6a1f;      /* 赭石 */
+  --high:#b23a2e; --medium:#a9761c; --low:#2f6b50;
+  --info:#1d4e6b; --warn:#a9761c; --success:#2f6b50; --danger:#b23a2e;
+  --mark:#f7e08a; --mark-ink:#4a3a07;
+  --shadow:0 1px 1px rgba(70,55,25,.05),0 10px 26px rgba(80,60,25,.07);
+  --shadow-sm:0 1px 2px rgba(70,55,25,.06);
+}
+/* ---- 深色：夜读 ---- */
+html[data-theme="dark"]{
+  --bg:#14110c; --paper:#1c180f; --panel:#221d13; --panel-2:#2a2418;
+  --border:#3a3220; --rule:#4a4029;
+  --text:#ece3cf; --muted:#b3a888; --faint:#8a7f64;
+  --accent:#e08263; --accent-2:#d6a85a;
+  --high:#e08263; --medium:#d6a85a; --low:#7ec79f;
+  --info:#7fb6d8; --warn:#d6a85a; --success:#7ec79f; --danger:#e08263;
+  --mark:#cca83a; --mark-ink:#1a1505;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px rgba(0,0,0,.4);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+}
+
+/* ---- 纸张色调 tweak ---- */
+html[data-paper="cool"][data-theme="light"]{ --bg:#e6e8ea; --paper:#fbfbf9; --panel:#ffffff; --panel-2:#eef0f1; --border:#e0e2e4; --rule:#c7cacd; }
+html[data-paper="parch"][data-theme="light"]{ --bg:#e6d8b8; --paper:#f6ebcf; --panel:#fcf4dd; --panel-2:#efe1bf; --border:#ddc99c; --rule:#c7ad78; }
+
+/* ---- 强调色 tweak ---- */
+html[data-accent="green"]{ --accent:#1f5d4c; --high:#1f5d4c; --info:#1f5d4c; --danger:#b23a2e; }
+html[data-accent="indigo"]{ --accent:#1d3a6b; --high:#1d3a6b; --info:#1d3a6b; }
+html[data-accent="ochre"]{ --accent:#9a6a1f; --high:#9a6a1f; }
+/* 蓝色为主，重点/风险保留朱红（--high/--danger 不被覆盖） */
+html[data-accent="blue"]{ --accent:#2b5fb0; --accent-2:#1d4e6b; --info:#2b5fb0; }
+html[data-accent="blue"][data-theme="dark"]{ --accent:#6ea3e6; --accent-2:#8fb6dd; --info:#6ea3e6; }
+
+/* ---- 密度 tweak ---- */
+html[data-density="tight"]{ --content-pad:clamp(20px,3vw,48px); --scale:.94; }
+html[data-density="airy"]{ --content-pad:clamp(36px,6vw,110px); --scale:1.06; }
+
+/* ---- 正文字体 tweak ---- */
+html[data-bodyfont="sans"]{ --body-font:var(--sans); }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  font-size:calc(16.5px * var(--scale));line-height:1.72;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+/* 始终保留竖向滚动条占位：内容高度变化（展开/折叠章节）时居中版面不再左右"跳" */
+html{scrollbar-gutter:stable;overflow-y:scroll}
+body{transition:background .3s ease,color .3s ease}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:2px}
+::selection{background:var(--mark);color:var(--mark-ink)}
+
+/* ===================== 布局 ===================== */
+#layout{display:flex;min-height:100vh}
+#sidebar{
+  position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;
+  background:var(--paper);border-right:1px solid var(--rule);
+  overflow-y:auto;scrollbar-gutter:stable;padding:26px 22px 40px;z-index:20;
+}
+#sidebar::-webkit-scrollbar{width:9px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:2px solid var(--paper)}
+#main{margin-left:var(--sidebar-w);flex:1;min-width:0;
+  padding:0 var(--content-pad) 120px;background:var(--paper);
+  border-left:1px solid transparent;}
+/* 纸面内容居中宽栏：full-width 容器，文段用 .measure 控制行宽 */
+.sheet{max-width:1280px;margin:0 auto}
+.measure{max-width:var(--measure)}
+
+@media (max-width:920px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s ease;box-shadow:var(--shadow);width:300px}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:0 20px 80px}
+  #menu-toggle{display:inline-flex !important}
+}
+
+/* ===================== 侧栏（书脊·索引） ===================== */
+.brand{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.35;margin:0;color:var(--text);
+  letter-spacing:.01em}
+.brand .brand-kicker{display:block;font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:9px}
+.brand small{display:block;color:var(--faint);font-family:var(--sans);font-weight:400;font-size:11.5px;margin-top:8px;letter-spacing:.02em}
+.brand-rule{height:0;border:0;border-top:1px solid var(--rule);margin:16px 0 14px;position:relative}
+.brand-rule::after{content:"";position:absolute;left:0;top:2px;width:38px;border-top:2px solid var(--accent)}
+
+.side-stats{display:flex;flex-wrap:wrap;gap:0;margin:0 0 4px;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:var(--panel)}
+.side-stats .stat{flex:1;min-width:64px;padding:8px 10px;font-size:10.5px;color:var(--muted);
+  border-right:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;line-height:1.3}
+.side-stats .stat:last-child{border-right:none}
+.side-stats .stat b{display:block;color:var(--text);font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:0;text-transform:none;margin-bottom:1px}
+
+.nav-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;
+  margin:22px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+
+ul.tree{list-style:none;margin:0;padding:0}
+ul.tree ul{list-style:none;margin:0;padding-left:15px;border-left:1px solid var(--border)}
+ul.tree li{margin:0}
+.tree-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:4px;cursor:pointer;color:var(--muted)}
+.tree-row:hover{background:var(--panel-2);color:var(--text)}
+.tree-row.active{background:transparent;color:var(--text);box-shadow:inset 2px 0 0 var(--accent);border-radius:0 4px 4px 0}
+.tree-row.active .tw-id{color:var(--accent)}
+.tree-row .tw-id{color:var(--faint);font-size:11px;min-width:26px;font-variant-numeric:tabular-nums}
+.tree-row .tw-title{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-row .dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.dot.high{background:var(--high)} .dot.medium{background:var(--medium)} .dot.low{background:var(--low)}
+.toggle{width:13px;text-align:center;color:var(--faint);font-size:10px;user-select:none}
+li.collapsed > ul{display:none}
+.nav-jump{display:flex;align-items:baseline;gap:8px;padding:5px 7px;border-radius:4px;color:var(--muted);font-size:13px}
+.nav-jump:hover{background:var(--panel-2);color:var(--text);text-decoration:none}
+.nav-jump::before{content:"§";color:var(--faint);font-size:11px}
+
+/* ===================== 顶部报头 masthead ===================== */
+#menu-toggle{display:none;align-items:center;justify-content:center;width:40px;height:40px;
+  border:1px solid var(--rule);background:var(--panel);color:var(--text);border-radius:4px;cursor:pointer;
+  position:fixed;top:14px;left:14px;z-index:15;box-shadow:var(--shadow-sm)}
+
+.masthead{padding:46px 0 0}
+.masthead .mh-top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--accent);padding-bottom:11px;border-bottom:2px solid var(--text)}
+.masthead .mh-top .mh-right{color:var(--faint);font-weight:500;letter-spacing:.08em}
+.doc-title{font-family:var(--serif);font-size:clamp(27px,3.4vw,42px);line-height:1.2;font-weight:700;
+  margin:24px 0 0;letter-spacing:-.01em;color:var(--text);text-wrap:pretty}
+.doc-meta{display:flex;flex-wrap:wrap;gap:7px 22px;margin-top:18px;color:var(--muted);font-size:13px;
+  font-family:var(--sans)}
+.doc-meta span{display:inline-flex;align-items:center;gap:7px}
+.doc-meta span::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+
+/* 大数字条 statbar */
+.statbar{display:flex;flex-wrap:wrap;margin:30px 0 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.statbar .stat{flex:1;min-width:120px;padding:18px 22px 16px;border-right:1px solid var(--border);position:relative}
+.statbar .stat:last-child{border-right:none}
+.statbar .stat .num{font-family:var(--serif);font-size:clamp(28px,3.4vw,40px);font-weight:700;line-height:1;
+  color:var(--text);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:4px}
+.statbar .stat .unit{font-size:.42em;font-weight:600;color:var(--accent);letter-spacing:.02em}
+.statbar .stat .lab{font-family:var(--sans);font-size:11px;color:var(--muted);margin-top:9px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ===================== section ===================== */
+section{margin:0;padding:52px 0;scroll-margin-top:18px;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none}
+.sec-head{display:flex;align-items:baseline;gap:13px;margin:0 0 26px}
+.sec-head .sec-id{font-family:var(--serif);color:var(--accent);font-weight:700;font-size:20px;line-height:1}
+.sec-head h2{font-family:var(--serif);font-size:26px;font-weight:700;margin:0;letter-spacing:-.005em;color:var(--text)}
+.sec-head .badge{margin-left:auto;align-self:center}
+.sec-kicker{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 7px}
+
+/* ===================== 网格/卡片 ===================== */
+.grid{display:grid;gap:18px}
+.grid.cols-2{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.card-box{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:20px 22px;box-shadow:var(--shadow-sm)}
+
+/* ===================== 执行摘要 abstract ===================== */
+.abstract{position:relative;padding:30px 34px 30px 36px;background:var(--panel);
+  border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);
+  border-top:3px solid var(--accent)}
+.abstract .ab-label{font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:18px}
+.abstract ol{margin:0;padding:0;list-style:none;counter-reset:ab;
+  columns:330px;column-gap:46px}
+.abstract li{break-inside:avoid;margin:0 0 17px;padding-left:34px;position:relative;counter-increment:ab;
+  font-family:var(--body-font);font-size:16px;line-height:1.74;color:var(--text)}
+.abstract li:last-child{margin-bottom:0}
+.abstract li::before{content:counter(ab,decimal-leading-zero);position:absolute;left:0;top:.18em;
+  font-family:var(--serif);font-size:13px;font-weight:700;color:var(--accent);
+  border:1.5px solid var(--accent);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* ===================== 源文件 ===================== */
+.file-card{display:flex;flex-direction:column;gap:8px;border-top:3px solid var(--accent-2)}
+.file-card .fname{font-family:var(--serif);font-weight:700;font-size:17px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ftype{font-family:var(--sans);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:var(--accent);
+  border-radius:3px;padding:2px 7px;color:#fff}
+.file-card .frole{color:var(--muted);font-size:13.5px;line-height:1.55}
+.file-card .fmeta{color:var(--faint);font-size:12px;font-family:var(--sans);letter-spacing:.03em;
+  border-top:1px solid var(--border);padding-top:9px;margin-top:auto;font-variant-numeric:tabular-nums}
+
+/* ===================== 核心要点 keypoints ===================== */
+.grid.kp-grid{grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:0;
+  border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--panel)}
+.kp{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:22px 24px;
+  background:var(--panel);border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:relative}
+.kp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--medium)}
+.kp.high::before{background:var(--high)} .kp.medium::before{background:var(--medium)} .kp.low::before{background:var(--low)}
+.kp.high{background:linear-gradient(90deg,rgba(178,58,46,.045),transparent 60%)}
+.kp-seal{font-family:var(--serif);font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--faint);border:1.5px solid var(--border);flex:0 0 auto;line-height:1}
+.kp.high .kp-seal{color:var(--high);border-color:var(--high)}
+.kp.medium .kp-seal{color:var(--medium);border-color:var(--medium)}
+.kp.low .kp-seal{color:var(--low);border-color:var(--low)}
+.kp-body{min-width:0}
+.kp-kind{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;font-weight:800;
+  color:var(--accent);letter-spacing:.04em;margin-bottom:8px}
+.kp-kind::before{content:"";width:14px;height:2px;background:var(--accent);display:inline-block;border-radius:2px}
+.kp.high .kp-kind{color:var(--high)} .kp.high .kp-kind::before{background:var(--high)}
+.kp-text{font-family:var(--body-font);font-size:16px;line-height:1.7;color:var(--text)}
+
+/* ===================== 重要度徽章（印章式） ===================== */
+.badge{font-family:var(--sans);font-size:10.5px;font-weight:700;border-radius:3px;padding:3px 9px;
+  border:1px solid var(--border);color:var(--muted);background:transparent;letter-spacing:.06em;
+  display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;white-space:nowrap}
+.badge.high{color:var(--high);border-color:var(--high)}
+.badge.medium{color:var(--medium);border-color:var(--medium)}
+.badge.low{color:var(--low);border-color:var(--low)}
+.badge.high::before,.badge.medium::before,.badge.low::before{content:"";width:6px;height:6px;border-radius:50%}
+.badge.high::before{background:var(--high)} .badge.medium::before{background:var(--medium)} .badge.low::before{background:var(--low)}
+.imp-zh::after{font-weight:700}
+
+/* ===================== 来源引用 ===================== */
+.srcs{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.src{font-family:var(--sans);font-size:11px;color:var(--muted);background:var(--panel-2);
+  border:1px solid var(--border);border-radius:3px;padding:2px 8px;letter-spacing:.01em}
+.src b{color:var(--text);font-weight:600}
+
+/* ===================== 冲突对照 ===================== */
+.conflict{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-sm)}
+.conflict .c-topic{padding:14px 18px;font-family:var(--serif);font-weight:700;font-size:16px;background:var(--panel-2);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.position{padding:14px 18px;border-bottom:1px solid var(--border)}
+.position .pv{font-weight:500;font-family:var(--body-font)}
+.conflict .resolution{padding:14px 18px;color:var(--success);font-size:14px;background:rgba(47,107,80,.05)}
+.conflict .resolution::before{content:"结论 · ";color:var(--muted);font-weight:700}
+
+/* ===================== 图（diagram / chart） ===================== */
+.diagram-wrap{background:#fffdf7;border:1px solid var(--border);border-radius:4px;padding:22px;overflow:auto;text-align:center}
+.mermaid{display:inline-block;min-width:50px}
+.fig-cap{color:var(--muted);font-size:12.5px;margin-top:11px;text-align:center;font-family:var(--sans);font-style:italic}
+.fig-title{font-family:var(--serif);font-weight:700;margin:0 0 14px;font-size:17px;display:flex;align-items:baseline;gap:9px}
+.fig-title::before{content:"图";font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1em;
+  color:#fff;background:var(--accent-2);padding:2px 6px;border-radius:3px;text-transform:uppercase}
+.chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:22px;box-shadow:var(--shadow-sm)}
+.chart-wrap .fig-title::before{content:"表"}
+.chart-canvas-box{position:relative;height:340px}
+
+/* ===================== 金句 pull-quote ===================== */
+.quote{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:4px;
+  padding:30px 30px 26px;box-shadow:var(--shadow-sm);overflow:hidden}
+.quote::before{content:"\201C";position:absolute;left:14px;top:-14px;font-family:var(--serif);
+  font-size:96px;line-height:1;color:var(--accent);opacity:.18;pointer-events:none}
+.quote .q-text{font-family:var(--serif);font-size:21px;line-height:1.5;font-weight:500;color:var(--text);position:relative}
+.quote .q-attr{color:var(--accent);font-size:13px;margin-top:14px;font-family:var(--sans);font-weight:600;letter-spacing:.04em}
+.quote .q-attr::before{content:"— "}
+
+/* ===================== 提示框 callout ===================== */
+.callout{border:1px solid var(--border);border-left-width:4px;border-radius:4px;padding:16px 20px;background:var(--panel);box-shadow:var(--shadow-sm)}
+.callout .co-title{font-family:var(--serif);font-weight:700;font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.callout .co-title::before{content:"";width:8px;height:8px;border-radius:2px;transform:rotate(45deg);display:inline-block}
+.callout .md{font-family:var(--body-font);font-size:15.5px}
+.callout.info{border-left-color:var(--info)} .callout.warn{border-left-color:var(--warn)}
+.callout.success{border-left-color:var(--success)} .callout.danger{border-left-color:var(--danger)}
+.callout.info .co-title{color:var(--info)} .callout.warn .co-title{color:var(--warn)}
+.callout.success .co-title{color:var(--success)} .callout.danger .co-title{color:var(--danger)}
+.callout.info .co-title::before{background:var(--info)} .callout.warn .co-title::before{background:var(--warn)}
+.callout.success .co-title::before{background:var(--success)} .callout.danger .co-title::before{background:var(--danger)}
+
+/* ===================== 表格 ledger ===================== */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:4px;background:var(--panel)}
+table.data{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+table.data th,table.data td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--border)}
+table.data thead th{font-family:var(--sans);font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);background:var(--panel-2);border-bottom:2px solid var(--rule)}
+table.data td{font-family:var(--body-font)}
+table.data td:first-child{font-weight:600;color:var(--text)}
+table.data tbody tr:last-child td{border-bottom:none}
+table.data tbody tr:nth-child(even){background:rgba(205,191,159,.07)}
+table.data tbody tr:hover{background:var(--panel-2)}
+
+/* ===================== 图片 ===================== */
+.img-block{text-align:center}
+.img-block img{max-width:100%;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow-sm)}
+.img-missing{display:inline-block;padding:30px 36px;border:1px dashed var(--rule);border-radius:4px;color:var(--faint);font-size:13px;font-family:var(--sans)}
+
+/* ===================== 子节 subsections ===================== */
+.subsec{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:16px 18px;border-radius:4px;
+  background:var(--panel);border:1px solid var(--border)}
+.subsec .ss-id{font-family:var(--serif);color:var(--accent);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.subsec .ss-title{font-family:var(--serif);font-weight:700;font-size:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.subsec .ss-sum{color:var(--muted);font-size:14px;margin-top:5px;font-family:var(--body-font);line-height:1.6}
+
+/* ===================== 章节 ===================== */
+section.chapter{background:transparent}
+.chapter-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;margin:0 0 16px;
+  padding-bottom:13px;border-bottom:1px solid var(--rule)}
+.chapter-head .ch-no{font-family:var(--serif);font-size:clamp(40px,5vw,58px);font-weight:700;line-height:.85;
+  color:var(--accent);font-variant-numeric:tabular-nums;opacity:.9}
+.chapter-head h2{font-family:var(--serif);font-size:clamp(23px,2.6vw,30px);font-weight:700;margin:0;letter-spacing:-.01em;line-height:1.2;color:var(--text)}
+.chapter-head .ch-kicker{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.chapter .ch-blocks{display:flex;flex-direction:column;gap:22px}
+.chapter .ch-blocks > .md, .chapter .ch-blocks > .callout{max-width:var(--measure)}
+
+/* ===================== markdown inline ===================== */
+.md{font-family:var(--body-font);font-size:16.5px;line-height:1.78;color:var(--text)}
+.md strong{color:var(--text);font-weight:700}
+.md code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;background:var(--panel-2);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-size:.9em}
+.md em{font-style:italic}
+
+/* 数字高亮（重点突出，可在外观面板关闭） */
+mark.hl{background:linear-gradient(180deg,transparent 52%,var(--mark) 52%);color:inherit;padding:0 1px;
+  font-weight:600;border-radius:1px}
+html[data-hl="off"] mark.hl{background:none;font-weight:inherit}
+
+/* ===================== 杂项 ===================== */
+.empty{color:var(--faint);font-style:italic}
+.file-note{color:var(--muted);font-size:13px;margin-top:8px}
+footer.foot{color:var(--faint);font-size:11.5px;font-family:var(--sans);letter-spacing:.1em;text-transform:uppercase;
+  border-top:2px solid var(--text);padding-top:18px;margin-top:60px;text-align:center}
+
+/* ===================== 侧栏工具区 ===================== */
+.toolbar{margin:18px 0 4px;display:flex;flex-direction:column;gap:13px}
+.search-box{position:relative}
+.search-box input{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:3px;
+  color:var(--text);padding:9px 28px 9px 12px;font-size:13px;outline:none;font-family:var(--sans)}
+.search-box input::placeholder{color:var(--faint)}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(178,58,46,.12)}
+.search-box #q-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;
+  color:var(--faint);cursor:pointer;font-size:18px;line-height:1;display:none;padding:0 4px}
+.search-box.has-val #q-clear{display:block}
+.q-count{font-size:11px;color:var(--muted);min-height:0;margin-top:-6px;font-family:var(--sans)}
+.fg-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:7px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--sans);font-size:12px;padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text);cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip .cdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.chip .ctxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.imp-high .cdot{background:var(--high)} .chip.imp-medium .cdot{background:var(--medium)} .chip.imp-low .cdot{background:var(--low)}
+.chip.off{opacity:.42;text-decoration:line-through;border-style:dashed}
+mark.search-hit{background:var(--mark);color:var(--mark-ink);border-radius:2px;padding:0 1px}
+
+/* 外观面板 */
+.appearance{border-top:1px solid var(--border);padding-top:14px}
+.ap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.ap-row .ap-name{font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;background:var(--panel)}
+.seg button{font-family:var(--sans);border:none;background:transparent;color:var(--muted);font-size:11.5px;
+  padding:5px 9px;cursor:pointer;border-right:1px solid var(--border);line-height:1}
+.seg button:last-child{border-right:none}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.swatches{display:inline-flex;gap:7px}
+.swatch{width:21px;height:21px;border-radius:50%;border:1.5px solid var(--border);cursor:pointer;padding:0;position:relative}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--text)}
+
+/* 重点/全部模式按钮 */
+.mode-btn{width:100%;font-family:var(--sans);border:1px solid var(--accent);background:var(--accent);color:#fff;
+  border-radius:3px;padding:9px 10px;cursor:pointer;font-size:12.5px;font-weight:700;letter-spacing:.04em;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.mode-btn:hover{filter:brightness(1.07)}
+
+/* ===================== 关键指标卡（highlights 首屏 + metric block） ===================== */
+.metrics{display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-sm)}
+.metric-card{padding:20px 22px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:relative}
+.metric-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-2)}
+.metric-card.high::before{background:var(--high)} .metric-card.medium::before{background:var(--medium)} .metric-card.low::before{background:var(--low)}
+.metric-card .mv{font-family:var(--serif);font-size:clamp(26px,3vw,34px);font-weight:700;line-height:1.05;
+  color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.metric-card .ml{font-family:var(--sans);font-size:11px;color:var(--muted);margin-top:9px;letter-spacing:.06em;text-transform:uppercase}
+.metric-card .msub{font-family:var(--sans);font-size:11.5px;color:var(--faint);margin-top:4px}
+.metric-card .srcs{margin-top:10px}
+#sec-highlights .metric-card .mv{color:var(--accent)}
+
+/* ===================== 炼化体检条 ===================== */
+.distill{display:flex;flex-wrap:wrap;gap:10px}
+.distill .d-chip{font-family:var(--sans);background:var(--panel);border:1px solid var(--border);border-radius:4px;
+  padding:11px 16px;min-width:104px;box-shadow:var(--shadow-sm)}
+.distill .d-lab{display:block;font-size:10px;font-weight:800;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}
+.distill .d-chip b{display:block;color:var(--text);font-family:var(--serif);font-size:19px;font-weight:700;margin-top:5px;
+  font-variant-numeric:tabular-nums;letter-spacing:0}
+.distill .d-chip.warn{border-color:var(--warn)} .distill .d-chip.warn .d-lab{color:var(--warn)} .distill .d-chip.warn b{color:var(--warn)}
+.distill .d-chip.factcheck{border-color:var(--success);flex:1 1 100%}
+.distill .d-chip.factcheck .d-lab{color:var(--success)}
+.distill .d-fc{display:block;margin-top:5px;color:var(--text);font-size:13.5px;font-family:var(--body-font);letter-spacing:0;text-transform:none}
+
+/* ===================== 章节折叠（渐进披露） ===================== */
+.chapter-head{cursor:pointer}
+.ch-meta{display:flex;align-items:center;gap:11px;justify-self:end}
+.ch-toggle{font-family:var(--sans);border:1px solid var(--border);background:var(--panel);color:var(--muted);
+  border-radius:3px;padding:4px 12px;font-size:11.5px;cursor:pointer;white-space:nowrap;letter-spacing:.04em}
+.ch-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.ch-summary{font-family:var(--body-font);color:var(--muted);font-size:15.5px;line-height:1.7;margin:0 0 14px;max-width:var(--measure)}
+/* 章节级来源行：贴着 head/summary，与正文之间留稳定间距 */
+.chapter .ch-body > .srcs:first-child{margin:2px 0 18px}
+.chapter.collapsed .ch-body{display:none}
+.chapter.collapsed .chapter-head{margin-bottom:14px}
+.chapter.collapsed .ch-summary{margin-bottom:2px}
+
+/* ===================== 大尺寸逻辑/关系图 + 点击放大 ===================== */
+#sec-diagrams .grid, #sec-relations .grid{grid-template-columns:1fr}
+.diagram-wrap{position:relative;cursor:zoom-in}
+.diagram-wrap .mermaid{width:100%}
+.diagram-wrap .mermaid svg{max-width:100%;height:auto}
+#sec-diagrams .diagram-wrap, #sec-relations .diagram-wrap{min-height:340px;display:flex;flex-direction:column;justify-content:center}
+.diagram-zoom{position:absolute;top:10px;right:10px;font-family:var(--sans);border:1px solid var(--border);background:var(--panel);
+  color:var(--muted);border-radius:3px;padding:3px 10px;font-size:11px;cursor:zoom-in;z-index:2;letter-spacing:.04em}
+.diagram-zoom:hover{border-color:var(--accent);color:var(--accent)}
+#dlg-modal{position:fixed;inset:0;background:rgba(20,15,8,.82);z-index:100;display:none;align-items:center;justify-content:center;padding:26px}
+#dlg-modal.open{display:flex}
+#dlg-modal .dlg-inner{background:#fffdf7;border-radius:6px;max-width:96vw;max-height:92vh;overflow:auto;padding:28px;box-shadow:var(--shadow)}
+#dlg-modal .dlg-inner svg{max-width:none;height:auto}
+#dlg-close{position:fixed;top:18px;right:22px;border:none;background:#fffdf7;color:#272019;border-radius:50%;
+  width:40px;height:40px;font-size:21px;cursor:pointer;line-height:1;z-index:101}
+.dlg-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:#d8cbb0;font-size:12px;font-family:var(--sans);z-index:101}
+
+.filtered-out{display:none !important}
+
+@media print{
+  #sidebar,#menu-toggle{display:none}
+  #main{margin-left:0}
+  section{break-inside:avoid;border-bottom:none}
+}
+</style>
+</head>
+<body>
+<!-- ====== 渲染器数据注入位（唯一，禁止预填数据；renderer 替换下方 token）====== -->
+<script id="dashboard-data" type="application/json">{"meta": {"title": "2024 年云业务季度复盘与年度展望（集成测试 fixture）", "content_lang": "zh", "ui_lang": "zh", "generated_at": "2026-06-05", "stats": {"file_count": 2, "total_pages": 47, "total_words": 18600, "reading_minutes": 62}, "executive_summary": ["两份文件分别为 Q3 季度复盘（PPT）与年度战略白皮书（PDF），共同围绕云业务增长展开。", "全年营收口径在两份文件中存在不一致（38 亿 vs 41.2 亿），已在冲突区标注并倾向采用较新的白皮书口径。", "核心结论：云业务连续四个季度双位数增长，但毛利率受基础设施投入拖累，2025 年以提效为主线。", "建议优先关注三大风险：客户集中度、汇率波动、数据中心电力成本。"]}, "files": [{"id": "f1", "name": "Q3-云业务复盘.pptx", "type": "pptx", "pages": 22, "words": 5200, "date": "2024-10-15", "role": "时间序列起点 / 季度视角"}, {"id": "f2", "name": "2024-云业务年度白皮书.pdf", "type": "pdf", "pages": 25, "words": 13400, "date": "2025-01-20", "role": "最新版 / 主干口径"}], "highlights": [{"value": "41.2 亿", "label": "2024 全年云业务营收", "sub": "白皮书口径", "importance": "high", "sources": [{"file_id": "f2", "page": 12}]}, {"value": "+18%", "label": "Q4 同比增速", "sub": "全年最高", "importance": "high", "sources": [{"file_id": "f2", "page": 8}]}, {"value": "-2.1pp", "label": "毛利率同比", "sub": "基础设施折旧拖累", "sources": [{"file_id": "f2", "page": 15}]}, {"value": "47%", "label": "前五大客户营收占比", "sub": "集中度风险", "importance": "medium", "sources": [{"file_id": "f2", "page": 19}]}], "distillation_report": {"source_words": 18600, "compression_ratio": "约 7:1", "section_coverage": "2/2 章已映射", "claims_with_source": "100%（0 条无源）", "todo_ratio": "1 处待核实 / 约 30 数据点 ≈ 3%", "derived_numbers": 2, "unmapped_source_blocks": [], "fact_check": "已核 14 条、修正 1 条、补回 1 条遗漏（阶段二·五）"}, "file_relations": {"mermaid": "flowchart LR\n  f1[\"Q3 复盘 PPT\\n季度视角\"] --\u003e|数据汇入更新| f2[\"年度白皮书 PDF\\n主干口径\"]\n  f2 -.-\u003e|修正全年营收口径| f1", "note": "白皮书发布晚于季度复盘，全年口径以白皮书为准；季度趋势细节仍以复盘 PPT 为来源。"}, "conflicts": [{"id": "c1", "topic": "2024 全年云业务营收", "positions": [{"value": "约 38 亿元（截至 Q3 外推估算）", "source": {"file_id": "f1", "loc": "Slide 9"}}, {"value": "41.2 亿元（全年实际）", "source": {"file_id": "f2", "page": 12}}], "resolution": "采用白皮书 41.2 亿元口径：发布更晚且为实际而非外推，季度复盘为 Q3 时点的全年预估。", "confidence": "high"}], "keypoints": [{"id": "k1", "text": "云业务连续四个季度营收双位数同比增长，Q4 增速 18%。", "kind": "数字", "importance": "high", "sources": [{"file_id": "f2", "page": 8}, {"file_id": "f1", "loc": "Slide 5"}]}, {"id": "k2", "text": "2024 全年云业务营收 41.2 亿元，占公司总营收 34%。", "kind": "数字", "importance": "high", "sources": [{"file_id": "f2", "page": 12}]}, {"id": "k3", "text": "毛利率同比下降 2.1 个百分点，主因新建数据中心折旧与电力成本上升。", "kind": "结论", "importance": "high", "sources": [{"file_id": "f2", "page": 15}]}, {"id": "k4", "text": "前五大客户贡献营收占比达 47%，客户集中度风险显著。", "kind": "风险", "importance": "medium", "sources": [{"file_id": "f2", "page": 19}]}, {"id": "k5", "text": "“云原生优先”定义为：新增工作负载默认部署于容器与 Serverless 平台。", "kind": "定义", "importance": "low", "sources": [{"file_id": "f1", "loc": "Slide 14"}]}], "diagrams": [{"id": "d1", "title": "云业务增长驱动因素关系图", "kind": "flowchart", "mermaid": "flowchart TD\n  A[客户上云需求] --\u003e B[营收增长]\n  C[基础设施投入] --\u003e D[毛利率承压]\n  B --\u003e E[2025 提效战略]\n  D --\u003e E\n  E --\u003e F[单位经济模型优化]", "caption": "营收增长与成本承压共同推动 2025 年提效战略。", "sources": [{"file_id": "f2", "page": 21}, {"file_id": "f1", "loc": "Slide 18"}]}], "charts": [{"id": "ch1", "title": "四个季度云业务营收（亿元）", "caption": "数据来源以白皮书全年口径校准。", "chartjs": {"type": "bar", "data": {"labels": ["Q1", "Q2", "Q3", "Q4"], "datasets": [{"label": "营收（亿元）", "data": [9.1, 9.8, 10.6, 11.7]}]}, "options": {"responsive": true, "plugins": {"legend": {"position": "top"}}}}, "sources": [{"file_id": "f2", "page": 9}]}], "quotes": [{"id": "q1", "text": "增长不是目的，可持续的单位经济模型才是。", "attribution": "CFO 在年度战略章节", "source": {"file_id": "f2", "page": 23}}], "outline": [{"id": "1", "title": "业务表现", "summary": "2024 全年与各季度的营收、增速与毛利表现。", "importance": "high", "sources": [{"file_id": "f2", "page": 8}, {"file_id": "f1", "loc": "Slide 5"}], "children": [{"id": "1.1", "title": "营收与增速", "summary": "连续四个季度双位数增长，全年 41.2 亿元。", "importance": "high", "sources": [{"file_id": "f2", "page": 9}], "children": [{"id": "1.1.1", "title": "季度营收明细", "summary": "Q1–Q4 逐季营收与环比。", "importance": "medium", "sources": [{"file_id": "f1", "loc": "Slide 6"}]}]}, {"id": "1.2", "title": "盈利能力", "summary": "毛利率同比下降 2.1pp。", "importance": "high", "sources": [{"file_id": "f2", "page": 15}]}]}, {"id": "2", "title": "战略与风险", "summary": "2025 提效主线与三大风险。", "importance": "high", "sources": [{"file_id": "f2", "page": 22}], "children": [{"id": "2.1", "title": "2025 战略主线", "summary": "由规模扩张切换为提效。", "importance": "high", "sources": [{"file_id": "f2", "page": 22}]}, {"id": "2.2", "title": "主要风险", "summary": "客户集中度、汇率、电力成本。", "importance": "medium", "sources": [{"file_id": "f2", "page": 19}]}]}], "chapters": [{"id": "1", "title": "业务表现", "importance": "high", "sources": [{"file_id": "f2", "page": 8}, {"file_id": "f1", "loc": "Slide 5"}], "blocks": [{"type": "paragraph", "md": "2024 年云业务**连续四个季度双位数增长**，全年营收按白皮书口径为 41.2 亿元，占公司总营收约 34%。", "sources": [{"file_id": "f2", "page": 12}]}, {"type": "metric", "title": "本章关键数字", "items": [{"value": "41.2 亿", "label": "全年营收", "sub": "白皮书口径", "sources": [{"file_id": "f2", "page": 12}]}, {"value": "34%", "label": "占公司总营收", "importance": "high", "sources": [{"file_id": "f2", "page": 12}]}, {"value": "11.7 亿", "label": "Q4 单季营收", "sources": [{"file_id": "f1", "loc": "Slide 6"}]}]}, {"type": "callout", "tone": "warn", "title": "口径提示", "md": "全年营收存在 38 亿 / 41.2 亿两种口径，详见冲突区，本章统一采用白皮书 41.2 亿。", "sources": [{"file_id": "f2", "page": 12}]}, {"type": "keypoints", "items": [{"text": "Q4 同比增速 18%，为全年最高。", "importance": "high", "sources": [{"file_id": "f2", "page": 8}]}, {"text": "毛利率同比下降 2.1 个百分点。", "importance": "medium", "sources": [{"file_id": "f2", "page": 15}]}]}, {"type": "chart", "chart_id": "ch1"}, {"type": "table", "title": "逐季营收与环比", "columns": ["季度", "营收（亿元）", "环比"], "rows": [["Q1", 9.1, "—"], ["Q2", 9.8, "+7.7%"], ["Q3", 10.6, "+8.2%"], ["Q4", 11.7, "+10.4%"]], "sources": [{"file_id": "f1", "loc": "Slide 6"}]}, {"type": "image", "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "caption": "白皮书原图：四季度营收趋势曲线（测试用 1×1 PNG）。", "source": {"file_id": "f2", "page": 9}}, {"type": "subsections", "items": [{"id": "1.1", "title": "营收与增速", "summary": "连续四个季度双位数增长，全年 41.2 亿元。", "importance": "high", "sources": [{"file_id": "f2", "page": 9}]}, {"id": "1.2", "title": "盈利能力", "summary": "毛利率同比下降 2.1pp，主因基础设施折旧。", "importance": "high", "sources": [{"file_id": "f2", "page": 15}]}]}]}, {"id": "2", "title": "战略与风险", "importance": "high", "sources": [{"file_id": "f2", "page": 22}], "blocks": [{"type": "paragraph", "md": "2025 年战略主线由“规模扩张”切换为“单位经济模型提效”，强调云原生优先与成本结构优化。", "sources": [{"file_id": "f2", "page": 22}]}, {"type": "diagram", "diagram_id": "d1"}, {"type": "quote", "quote_id": "q1"}]}]}</script>
+
+<div id="layout">
+  <aside id="sidebar">
+    <div id="side-content"></div>
+  </aside>
+  <main id="main">
+    <button id="menu-toggle" aria-label="菜单">☰</button>
+    <div class="sheet">
+      <div id="app"></div>
+      <footer class="foot" id="foot"></footer>
+    </div>
+  </main>
+</div>
+
+<!-- 逻辑/关系图放大浮层 -->
+<div id="dlg-modal" aria-hidden="true">
+  <button id="dlg-close" aria-label="关闭">×</button>
+  <div class="dlg-inner" id="dlg-inner"></div>
+  <div class="dlg-hint" id="dlg-hint"></div>
+</div>
+
+<script>
+/* =====================================================================
+   doc-atlas 前端 app —— 纯内联，离线运行。
+   读取 #dashboard-data 注入的 model（renderer 已把图片替换为 dataURI）。
+   所有字段缺省都优雅降级：缺省即不渲染对应模块。
+   ===================================================================== */
+(function(){
+  "use strict";
+
+  // ---------- 安全读取注入数据 ----------
+  var MODEL = {};
+  try {
+    var node = document.getElementById('dashboard-data');
+    MODEL = JSON.parse(node.textContent) || {};
+  } catch (e) {
+    document.getElementById('app').innerHTML =
+      '<p style="color:#ff5d6c">注入数据解析失败：' + esc(String(e)) + '</p>';
+    return;
+  }
+
+  var meta     = MODEL.meta || {};
+  var files    = Array.isArray(MODEL.files) ? MODEL.files : [];
+  var outline  = Array.isArray(MODEL.outline) ? MODEL.outline : [];
+  var chapters = Array.isArray(MODEL.chapters) ? MODEL.chapters : [];
+
+  // 界面语言：跟随用户在阶段零选定的 ui_lang（en 走英文，其余走中文）
+  var UI = String(meta.ui_lang || meta.content_lang || 'zh').toLowerCase();
+  var EN = UI.indexOf('en') === 0;
+  function tx(zh, en){ return EN ? en : zh; }
+  try { document.documentElement.setAttribute('lang', EN ? 'en' : (UI || 'zh')); } catch (e){}
+
+  // outline 任意节点 id → summary（章节折叠时显示一句话概括）
+  var summaryById = {};
+  (function idx(nodes){
+    if (!Array.isArray(nodes)) return;
+    nodes.forEach(function(n){
+      if (n && n.id != null && n.summary) summaryById[String(n.id)] = n.summary;
+      if (n && Array.isArray(n.children)) idx(n.children);
+    });
+  })(outline);
+
+  // 文件名查表（SourceRef 美化用）
+  var fileMap = {};
+  files.forEach(function(f){ if (f && f.id != null) fileMap[f.id] = f; });
+  // 全局对象索引（供 block 引用）
+  var quoteMap = indexById(MODEL.quotes);
+  var diagramMap = indexById(MODEL.diagrams);
+  var chartMap = indexById(MODEL.charts);
+
+  // 待执行的渲染任务（Mermaid 文本 / Chart 配置），在 DOM 注入后统一处理
+  var mermaidTasks = [];   // { id, code }
+  var chartTasks = [];     // { id, cfg }
+  var mermaidSeq = 0, chartSeq = 0;
+
+  // ============================ 工具函数 ============================
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+  function indexById(arr){
+    var m = {};
+    if (Array.isArray(arr)) arr.forEach(function(o){ if (o && o.id != null) m[o.id] = o; });
+    return m;
+  }
+  function isArr(x){ return Array.isArray(x) && x.length > 0; }
+  function truncate(s, n){ s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  // 从 SourceRef[] 取唯一 file_id 列表
+  function fileIdsOf(arr){
+    var s = {};
+    (Array.isArray(arr) ? arr : []).forEach(function(x){ if (x && x.file_id != null) s[x.file_id] = true; });
+    return Object.keys(s);
+  }
+  // 深度收集任意对象/数组里的 file_id（用于章节聚合来源）
+  function collectFileIds(node, set){
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)){ node.forEach(function(x){ collectFileIds(x, set); }); return; }
+    if (node.file_id != null) set[node.file_id] = true;
+    Object.keys(node).forEach(function(k){ var v = node[k]; if (v && typeof v === 'object') collectFileIds(v, set); });
+  }
+
+  // 极简 inline markdown：**bold** *em* `code`，先转义再替换（避免 XSS）
+  function mdInline(s){
+    var t = esc(s);
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    t = t.replace(/\n/g, '<br>');
+    return t;
+  }
+
+  // 数字/单位高亮（重点突出）：仅作用于标签外的文本片段，避免破坏 HTML
+  var HL_RE = /(\d[\d,\.]*\s?(?:kWh|kW|dB|℃|°C|°|%|km\/h|km|m\u00b3|m3|V\b|A\b|h\b|小时|分钟|秒|升\/?时?|升|吨|公里|万元|万|亿|元|次|年|月|天|页|字|倍|人))/g;
+  function hlNums(html){
+    return String(html).split(/(<[^>]+>)/).map(function(seg){
+      if (seg.charAt(0) === '<') return seg;
+      return seg.replace(HL_RE, '<mark class="hl">$1</mark>');
+    }).join('');
+  }
+  // mdInline + 数字高亮（用于摘要/要点等重点区）
+  function mdInlineHL(s){ return hlNums(mdInline(s)); }
+
+  // SourceRef → 友好标签
+  function srcLabel(s){
+    if (!s || typeof s !== 'object') return '';
+    var f = fileMap[s.file_id];
+    var name = f && f.name ? f.name : (s.file_id != null ? String(s.file_id) : '?');
+    var locPart = '';
+    if (s.page != null && s.page !== '') locPart = 'p.' + s.page;
+    else if (s.loc) locPart = s.loc;
+    return '<span class="src"><b>' + esc(name) + '</b>' + (locPart ? ' · ' + esc(locPart) : '') + '</span>';
+  }
+  function srcsHtml(arr){
+    if (!isArr(arr)) return '';
+    return '<div class="srcs">' + arr.map(srcLabel).join('') + '</div>';
+  }
+  function oneSrcHtml(s){
+    if (!s) return '';
+    return '<div class="srcs">' + srcLabel(s) + '</div>';
+  }
+  var IMP_ZH = EN ? { high:'Key', medium:'Normal', low:'Ref' } : { high:'重点', medium:'一般', low:'参考' };
+  function impBadge(imp){
+    if (!imp) return '';
+    return '<span class="badge ' + esc(imp) + '">' + esc(IMP_ZH[imp] || imp) + '</span>';
+  }
+
+  // 关键指标卡（highlights 顶层 + metric block 共用 MetricItem）
+  function metricItemsHtml(items){
+    if (!isArr(items)) return '';
+    return '<div class="metrics">' + items.map(function(m){
+      if (!m || typeof m !== 'object') return '';
+      var h = '<div class="metric-card' + (m.importance ? ' ' + esc(m.importance) : '') + '">';
+      h += '<div class="mv">' + esc(m.value) + '</div>';
+      h += '<div class="ml">' + esc(m.label) + '</div>';
+      if (m.sub) h += '<div class="msub">' + esc(m.sub) + '</div>';
+      h += srcsHtml(m.sources) + '</div>';
+      return h;
+    }).join('') + '</div>';
+  }
+
+  // 注册 mermaid 任务，返回占位 HTML
+  function mermaidPlaceholder(code, title, caption, srcs){
+    if (!code) return '';
+    var id = 'mmd-' + (++mermaidSeq);
+    mermaidTasks.push({ id: id, code: String(code) });
+    var html = '';
+    if (title) html += '<div class="fig-title">' + esc(title) + '</div>';
+    html += '<div class="diagram-wrap" title="' + tx('点击放大', 'Click to enlarge') + '">' +
+            '<button class="diagram-zoom" type="button" tabindex="-1">⤢ ' + tx('放大', 'Zoom') + '</button>' +
+            '<div class="mermaid" id="' + id + '"></div></div>';
+    if (caption) html += '<div class="fig-cap">' + esc(caption) + '</div>';
+    html += srcsHtml(srcs);
+    return html;
+  }
+  // 注册 chart 任务，返回占位 HTML
+  function chartPlaceholder(cfg, title, caption, srcs){
+    if (!cfg || typeof cfg !== 'object') return '';
+    var id = 'cht-' + (++chartSeq);
+    chartTasks.push({ id: id, cfg: cfg });
+    var html = '<div class="chart-wrap">';
+    if (title) html += '<div class="fig-title">' + esc(title) + '</div>';
+    html += '<div class="chart-canvas-box"><canvas id="' + id + '"></canvas></div>';
+    if (caption) html += '<div class="fig-cap">' + esc(caption) + '</div>';
+    html += srcsHtml(srcs) + '</div>';
+    return html;
+  }
+
+  // ============================ 顶层区块 ============================
+
+  function renderHero(){
+    var s = meta.stats || {};
+
+    // 报头 meta 行
+    var line = [];
+    if (meta.generated_at) line.push(tx('生成于 ', 'Generated ') + esc(meta.generated_at));
+    if (meta.content_lang) line.push(tx('内容语言 ', 'Source ') + esc(meta.content_lang).toUpperCase());
+    if (s.file_count != null) line.push(esc(s.file_count) + tx(' 个来源文件', ' source file(s)'));
+
+    // 大数字条：单位拆出
+    var bar = [];
+    function stat(n, unit, l){
+      if (n == null) return;
+      bar.push('<div class="stat"><div class="num">' + esc(n) +
+        (unit ? '<span class="unit">' + esc(unit) + '</span>' : '') +
+        '</div><div class="lab">' + esc(l) + '</div></div>');
+    }
+    stat(s.total_pages, tx('页','pg'), tx('文档篇幅','Pages'));
+    stat(s.total_words != null ? Number(s.total_words).toLocaleString('en-US') : null, tx('字','w'), tx('总字数','Words'));
+    stat(s.reading_minutes, 'min', tx('预计阅读','Read'));
+    stat(s.file_count, tx('份','f'), tx('来源文件','Files'));
+
+    var h = '<div class="masthead">';
+    h += '<div class="mh-top"><span>' + tx('doc-atlas · 文档解析报告', 'doc-atlas · document report') +
+         '</span><span class="mh-right">' + esc(meta.generated_at || '') + '</span></div>';
+    h += '<h1 class="doc-title">' + esc(meta.title || 'doc-atlas') + '</h1>';
+    if (line.length) h += '<div class="doc-meta">' + line.map(function(x){return '<span>'+x+'</span>';}).join('') + '</div>';
+    if (bar.length) h += '<div class="statbar">' + bar.join('') + '</div>';
+    h += '</div>';
+
+    if (isArr(meta.executive_summary)){
+      h += '<section id="sec-summary"><div class="sec-head"><span class="sec-id">§</span>' +
+           '<h2>' + tx('执行摘要','Executive summary') + '</h2><span class="badge">' +
+           meta.executive_summary.length + tx(' 条','') + '</span></div>';
+      h += '<div class="abstract"><div class="ab-label">' + tx('Abstract · 全篇要义','Abstract · key takeaways') + '</div><ol>' +
+           meta.executive_summary.map(function(x){return '<li>'+mdInlineHL(x)+'</li>';}).join('') +
+           '</ol></div></section>';
+    }
+    return h;
+  }
+
+  // 首屏关键指标条（L1 概览）
+  function renderHighlights(){
+    if (!isArr(MODEL.highlights)) return '';
+    return secWrap('sec-highlights', tx('关键指标','Key metrics'), null, metricItemsHtml(MODEL.highlights));
+  }
+
+  // 炼化体检条（可信度指标）
+  function renderDistill(){
+    var d = MODEL.distillation_report;
+    if (!d || typeof d !== 'object') return '';
+    var chips = [];
+    function chip(label, val, cls){ if (val != null && val !== '') chips.push('<span class="d-chip' + (cls?(' '+cls):'') + '"><span class="d-lab">' + esc(label) + '</span><b>' + esc(val) + '</b></span>'); }
+    chip(tx('章节覆盖','Coverage'), d.section_coverage);
+    chip(tx('压缩比','Compression'), d.compression_ratio);
+    chip(tx('溯源率','Sourced'), d.claims_with_source);
+    chip(tx('待核实','To-verify'), d.todo_ratio, 'warn');
+    chip(tx('派生数字','Derived'), d.derived_numbers);
+    chip(tx('原文字数','Src words'), d.source_words);
+    if (d.fact_check) chips.push('<span class="d-chip factcheck"><span class="d-lab">' + tx('事实核查','Fact-check') + '</span><span class="d-fc">✔ ' + esc(d.fact_check) + '</span></span>');
+    if (!chips.length) return '';
+    return secWrap('sec-distill', tx('炼化体检','Distillation check'), null, '<div class="distill">' + chips.join('') + '</div>');
+  }
+
+  function renderFiles(){
+    if (!isArr(files)) return '';
+    var cards = files.map(function(f){
+      var meta2 = [];
+      if (f.pages != null) meta2.push(f.pages + ' 页');
+      if (f.words != null) meta2.push(f.words + ' 字');
+      if (f.date) meta2.push(f.date);
+      var h = '<div class="card-box file-card">';
+      h += '<div class="fname">' + esc(f.name || f.id) + (f.type ? ' <span class="ftype">' + esc(f.type) + '</span>' : '') + '</div>';
+      if (f.role) h += '<div class="frole">' + esc(f.role) + '</div>';
+      if (meta2.length) h += '<div class="fmeta">' + esc(meta2.join(' · ')) + '</div>';
+      h += '</div>';
+      return h;
+    }).join('');
+    return secWrap('sec-files', tx('源文件','Source files'), files.length + tx(' 个',''),
+      '<div class="grid cols-2">' + cards + '</div>');
+  }
+
+  function renderFileRelations(){
+    var fr = MODEL.file_relations;
+    if (!fr || !fr.mermaid) return '';
+    var body = mermaidPlaceholder(fr.mermaid, null, fr.note || null, null);
+    return secWrap('sec-relations', tx('文件关系','File relations'), null, body);
+  }
+
+  function renderConflicts(){
+    if (!isArr(MODEL.conflicts)) return '';
+    var items = MODEL.conflicts.map(function(c){
+      var h = '<div class="conflict"><div class="c-topic">' + esc(c.topic || '冲突');
+      if (c.confidence) h += impBadge(c.confidence);
+      h += '</div><div class="positions">';
+      (Array.isArray(c.positions) ? c.positions : []).forEach(function(p){
+        h += '<div class="position"><div class="pv">' + mdInline(p.value) + '</div>' + oneSrcHtml(p.source) + '</div>';
+      });
+      h += '</div>';
+      if (c.resolution) h += '<div class="resolution">' + mdInline(c.resolution) + '</div>';
+      h += '</div>';
+      return h;
+    }).join('');
+    return secWrap('sec-conflicts', tx('冲突对照','Conflicts'), MODEL.conflicts.length + tx(' 处',''),
+      '<div class="grid">' + items + '</div>');
+  }
+
+  function renderKeypoints(){
+    if (!isArr(MODEL.keypoints)) return '';
+    var n = 0;
+    var items = MODEL.keypoints.map(function(k){
+      var imp = k.importance || 'medium';
+      n++;
+      var seal = ('0' + n).slice(-2);
+      var h = '<div class="kp ' + esc(imp) + '" data-imp="' + esc(imp) + '" data-files="' + esc(fileIdsOf(k.sources).join(',')) + '">';
+      h += '<span class="kp-seal" title="' + esc(IMP_ZH[imp] || imp) + '">' + seal + '</span>';
+      h += '<div class="kp-body">';
+      if (k.kind) h += '<div class="kp-kind">' + esc(k.kind) + '</div>';
+      h += '<div class="kp-text">' + mdInlineHL(k.text) + '</div>' + srcsHtml(k.sources);
+      h += '</div></div>';
+      return h;
+    }).join('');
+    return secWrap('sec-keypoints', tx('核心要点','Key points'), MODEL.keypoints.length + tx(' 条',''),
+      '<div class="grid kp-grid">' + items + '</div>');
+  }
+
+  function renderDiagrams(){
+    if (!isArr(MODEL.diagrams)) return '';
+    var items = MODEL.diagrams.map(function(d){
+      return '<div class="card-box">' + mermaidPlaceholder(d.mermaid, d.title, d.caption, d.sources) + '</div>';
+    }).join('');
+    return secWrap('sec-diagrams', tx('逻辑 / 关系图','Logic & relations'), null, '<div class="grid">' + items + '</div>');
+  }
+
+  function renderCharts(){
+    if (!isArr(MODEL.charts)) return '';
+    var items = MODEL.charts.map(function(c){
+      return chartPlaceholder(c.chartjs, c.title, c.caption, c.sources);
+    }).join('');
+    return secWrap('sec-charts', tx('数据图表','Charts'), null, '<div class="grid">' + items + '</div>');
+  }
+
+  function renderQuotes(){
+    if (!isArr(MODEL.quotes)) return '';
+    var items = MODEL.quotes.map(function(q){ return quoteHtml(q.text, q.attribution, q.source); }).join('');
+    return secWrap('sec-quotes', tx('金句','Quotes'), null, '<div class="grid cols-2">' + items + '</div>');
+  }
+  function quoteHtml(text, attr, src){
+    var h = '<div class="quote"><div class="q-text">' + mdInline(text) + '</div>';
+    if (attr) h += '<div class="q-attr">' + esc(attr) + '</div>';
+    h += oneSrcHtml(src) + '</div>';
+    return h;
+  }
+
+  // ============================ Block 调色板 ============================
+  function renderBlock(b){
+    if (!b || typeof b !== 'object') return '';
+    switch (b.type){
+      case 'paragraph':
+        return '<div class="md">' + mdInlineHL(b.md) + srcsHtml(b.sources) + '</div>';
+
+      case 'callout': {
+        var tone = b.tone || 'info';
+        var h = '<div class="callout ' + esc(tone) + '">';
+        if (b.title) h += '<div class="co-title">' + esc(b.title) + '</div>';
+        h += '<div class="md">' + mdInlineHL(b.md) + '</div>' + srcsHtml(b.sources) + '</div>';
+        return h;
+      }
+
+      case 'keypoints': {
+        var j = 0;
+        var its = (Array.isArray(b.items) ? b.items : []).map(function(it){
+          var imp = it.importance || 'medium';
+          j++;
+          return '<div class="kp ' + esc(imp) + '"><span class="kp-seal">' + ('0'+j).slice(-2) +
+                 '</span><div class="kp-body"><div class="kp-text">' +
+                 mdInlineHL(it.text) + '</div>' + srcsHtml(it.sources) + '</div></div>';
+        }).join('');
+        return '<div class="grid kp-grid">' + its + '</div>';
+      }
+
+      case 'metric': {
+        var mh = '';
+        if (b.title) mh += '<div class="fig-title">' + esc(b.title) + '</div>';
+        mh += metricItemsHtml(b.items) + srcsHtml(b.sources);
+        return mh;
+      }
+
+      case 'quote': {
+        if (b.quote_id != null){
+          var q = quoteMap[b.quote_id];
+          if (q) return quoteHtml(q.text, q.attribution, q.source);
+          return '<div class="quote empty">（引用的金句 ' + esc(b.quote_id) + ' 不存在）</div>';
+        }
+        return quoteHtml(b.text, b.attribution, b.source);
+      }
+
+      case 'diagram': {
+        if (b.diagram_id != null){
+          var d = diagramMap[b.diagram_id];
+          if (d) return mermaidPlaceholder(d.mermaid, d.title, d.caption, d.sources);
+          return '<div class="empty">（引用的关系图 ' + esc(b.diagram_id) + ' 不存在）</div>';
+        }
+        return mermaidPlaceholder(b.mermaid, b.title, b.caption, b.sources);
+      }
+
+      case 'chart': {
+        if (b.chart_id != null){
+          var c = chartMap[b.chart_id];
+          if (c) return chartPlaceholder(c.chartjs, c.title, c.caption, c.sources);
+          return '<div class="empty">（引用的图表 ' + esc(b.chart_id) + ' 不存在）</div>';
+        }
+        return chartPlaceholder(b.chartjs, b.title, b.caption, b.sources);
+      }
+
+      case 'table': {
+        var cols = Array.isArray(b.columns) ? b.columns : [];
+        var rows = Array.isArray(b.rows) ? b.rows : [];
+        var h = '';
+        if (b.title) h += '<div class="fig-title">' + esc(b.title) + '</div>';
+        h += '<div class="tbl-wrap"><table class="data"><thead><tr>' +
+             cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('') + '</tr></thead><tbody>';
+        rows.forEach(function(r){
+          h += '<tr>' + (Array.isArray(r) ? r : []).map(function(cell){return '<td>'+hlNums(esc(cell))+'</td>';}).join('') + '</tr>';
+        });
+        h += '</tbody></table></div>' + srcsHtml(b.sources);
+        return h;
+      }
+
+      case 'image': {
+        var src = b.src;
+        var h = '<div class="img-block">';
+        if (src && /^data:/.test(String(src))){
+          h += '<img src="' + esc(src) + '" alt="' + esc(b.caption || '') + '">';
+        } else if (src){
+          // 已 dataURI 化失败或为远程：直接尝试 src（离线场景通常为空）
+          h += '<img src="' + esc(src) + '" alt="' + esc(b.caption || '') + '">';
+        } else {
+          h += '<div class="img-missing">' + tx('图片缺失','image missing') + '</div>';
+        }
+        if (b.caption) h += '<div class="fig-cap">' + esc(b.caption) + '</div>';
+        h += oneSrcHtml(b.source) + '</div>';
+        return h;
+      }
+
+      case 'subsections': {
+        var its2 = (Array.isArray(b.items) ? b.items : []).map(function(it){
+          var h = '<div class="subsec"><span class="ss-id">' + esc(it.id || '') + '</span><div>';
+          h += '<div class="ss-title">' + esc(it.title || '') + impBadge(it.importance) + '</div>';
+          if (it.summary) h += '<div class="ss-sum">' + mdInlineHL(it.summary) + '</div>';
+          h += srcsHtml(it.sources) + '</div></div>';
+          return h;
+        }).join('');
+        return '<div class="grid cols-2">' + its2 + '</div>';
+      }
+
+      default:
+        return ''; // 未知类型优雅跳过
+    }
+  }
+
+  // 章节体默认折叠（渐进披露：先看标题+小结，点开看细节）。可被全局「展开全部」翻转。
+  var CH_COLLAPSED_DEFAULT = true;
+  function renderChapters(){
+    if (!isArr(chapters)) return '';
+    return chapters.map(function(ch){
+      var blocks = Array.isArray(ch.blocks) ? ch.blocks : [];
+      var body = '<div class="ch-blocks">' + blocks.map(renderBlock).join('') + '</div>';
+      var idStr = String(ch.id == null ? '' : ch.id);
+      var no = /^\d+$/.test(idStr) ? ('0' + idStr).slice(-2) : idStr;
+      var collapsed = CH_COLLAPSED_DEFAULT;
+      var toggleLabel = collapsed ? tx('展开 ▸','Expand ▸') : tx('收起 ▾','Collapse ▾');
+      var badge = ch.importance ? '<span class="badge ' + esc(ch.importance) + '">' + esc(IMP_ZH[ch.importance] || ch.importance) + '</span>' : '';
+      var head = '<div class="chapter-head"><span class="ch-no">' + esc(no) + '</span>' +
+                 '<h2>' + esc(ch.title || '') + '</h2>' +
+                 '<span class="ch-meta">' + badge + '<button class="ch-toggle" type="button">' + toggleLabel + '</button></span>' +
+                 '</div>';
+      var summary = summaryById[idStr] ? '<div class="ch-summary">' + mdInlineHL(summaryById[idStr]) + '</div>' : '';
+      var srcs = srcsHtml(ch.sources);
+      var fset = {}; collectFileIds(ch, fset);
+      var imp = ch.importance || 'medium';
+      return '<section class="chapter' + (collapsed ? ' collapsed' : '') + '" id="ch-' + esc(ch.id) + '" data-chapter="' + esc(ch.id) +
+             '" data-imp="' + esc(imp) + '" data-files="' + esc(Object.keys(fset).join(',')) + '">' +
+             head + summary + '<div class="ch-body">' + srcs + body + '</div></section>';
+    }).join('');
+  }
+
+  // 通用 section 包裹
+  function secWrap(id, title, badgeText, body){
+    var head = '<div class="sec-head"><span class="sec-id">§</span><h2>' + esc(title) + '</h2>';
+    if (badgeText) head += '<span class="badge">' + esc(badgeText) + '</span>';
+    head += '</div>';
+    return '<section id="' + id + '">' + head + body + '</section>';
+  }
+
+  // ============================ 侧栏工具区 ============================
+  function impChip(v, label){
+    return '<span class="chip imp-' + v + '" data-imp="' + v + '"><span class="cdot"></span><span class="ctxt">' + label + '</span></span>';
+  }
+  function buildToolbar(){
+    var h = '<div class="toolbar">';
+    // 重点 / 全部 模式切换（默认折叠章节 → 提示「展开全部」）
+    if (isArr(chapters)){
+      h += '<button id="mode-btn" class="mode-btn" type="button">📖 ' + tx('展开全部','Expand all') + '</button>';
+    }
+    // 全文搜索
+    h += '<div class="search-box"><input id="q" type="search" placeholder="' + tx('搜索全文…','Search…') + '" autocomplete="off" spellcheck="false">' +
+         '<button id="q-clear" aria-label="' + tx('清除搜索','Clear') + '" type="button">×</button></div>';
+    h += '<div id="q-count" class="q-count"></div>';
+    // 重要度筛选
+    h += '<div class="filter-group"><div class="fg-label">' + tx('重要度筛选','Importance') + '</div><div id="imp-filter" class="chips">' +
+         impChip('high', IMP_ZH.high) + impChip('medium', IMP_ZH.medium) + impChip('low', IMP_ZH.low) + '</div></div>';
+    // 来源文件筛选（仅多于 0 个文件时）
+    if (isArr(files)){
+      h += '<div class="filter-group"><div class="fg-label">' + tx('来源文件筛选','Source files') + '</div><div id="src-filter" class="chips">' +
+        files.map(function(f){
+          return '<span class="chip" data-fid="' + esc(f.id) + '" title="' + esc(f.name || f.id) + '">' +
+                 '<span class="ctxt">' + esc(truncate(f.name || f.id, 16)) + '</span></span>';
+        }).join('') + '</div></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  // ============================ 侧栏：统计 + 大纲树 ============================
+  function buildSidebar(){
+    var s = meta.stats || {};
+    var h = '<div class="brand"><span class="brand-kicker">' + tx('doc-atlas · 纸本','doc-atlas · paper') + '</span>' + esc(meta.title || 'doc-atlas');
+    if (meta.generated_at) h += '<small>' + tx('解析于 ','Parsed ') + esc(meta.generated_at) + '</small>';
+    h += '</div><hr class="brand-rule">';
+
+    var st = [];
+    if (s.file_count != null) st.push('<span class="stat"><b>' + esc(s.file_count) + '</b>' + tx('来源','files') + '</span>');
+    if (s.total_pages != null) st.push('<span class="stat"><b>' + esc(s.total_pages) + '</b>' + tx('页','pages') + '</span>');
+    if (s.reading_minutes != null) st.push('<span class="stat"><b>' + esc(s.reading_minutes) + '</b>' + tx('分钟','min') + '</span>');
+    if (st.length) h += '<div class="side-stats">' + st.join('') + '</div>';
+
+    // ── 工具区：搜索 + 重要度筛选 + 来源筛选 + 主题切换 ──
+    h += buildToolbar();
+
+    // 快捷模块跳转
+    var jumps = [];
+    function jump(id, label, cond){ if (cond) jumps.push('<a class="nav-jump" href="#' + id + '">' + esc(label) + '</a>'); }
+    jump('sec-summary', tx('执行摘要','Executive summary'), isArr(meta.executive_summary));
+    jump('sec-highlights', tx('关键指标','Key metrics'), isArr(MODEL.highlights));
+    jump('sec-distill', tx('炼化体检','Distillation check'), MODEL.distillation_report && typeof MODEL.distillation_report === 'object');
+    jump('sec-keypoints', tx('核心要点','Key points'), isArr(MODEL.keypoints));
+    jump('sec-diagrams', tx('逻辑 / 关系图','Logic & relations'), isArr(MODEL.diagrams));
+    jump('sec-charts', tx('数据图表','Charts'), isArr(MODEL.charts));
+    jump('sec-conflicts', tx('冲突对照','Conflicts'), isArr(MODEL.conflicts));
+    jump('sec-quotes', tx('金句','Quotes'), isArr(MODEL.quotes));
+    jump('sec-relations', tx('文件关系','File relations'), MODEL.file_relations && MODEL.file_relations.mermaid);
+    jump('sec-files', tx('源文件','Source files'), isArr(files));
+    if (jumps.length){
+      h += '<div class="nav-title">' + tx('模块','Modules') + '</div>' + jumps.join('');
+    }
+
+    // 大纲树
+    if (isArr(outline)){
+      h += '<div class="nav-title">' + tx('目录','Contents') + '</div><ul class="tree">' + outline.map(treeNode).join('') + '</ul>';
+    }
+    document.getElementById('side-content').innerHTML = h;
+  }
+
+  function treeNode(n){
+    var hasChildren = isArr(n.children);
+    var imp = n.importance || 'medium';
+    // 一级节点对应章节锚点 ch-<id>；其余跳到最接近的章节（顶级 id 前缀）
+    var topId = String(n.id || '').split('.')[0];
+    var anchor = '#ch-' + topId;
+    var h = '<li' + (hasChildren ? '' : '') + '>';
+    h += '<div class="tree-row" data-anchor="' + esc(anchor) + '" data-id="' + esc(n.id) +
+         '" data-imp="' + esc(imp) + '" data-files="' + esc(fileIdsOf(n.sources).join(',')) + '">';
+    h += '<span class="toggle">' + (hasChildren ? '▾' : '') + '</span>';
+    h += '<span class="dot ' + esc(imp) + '"></span>';
+    h += '<span class="tw-id">' + esc(n.id || '') + '</span>';
+    h += '<span class="tw-title" title="' + esc(n.title || '') + '">' + esc(n.title || '') + '</span>';
+    h += '</div>';
+    if (hasChildren){
+      h += '<ul>' + n.children.map(treeNode).join('') + '</ul>';
+    }
+    h += '</li>';
+    return h;
+  }
+
+  // ============================ 装配 + 后处理 ============================
+  function assemble(){
+    var html = '';
+    html += renderHero();          // L1：报头 + 大数字条 + 执行摘要
+    html += renderHighlights();    // L1：首屏关键指标卡
+    html += renderDistill();       // 炼化体检条（可信度）
+    html += renderKeypoints();     // L2：核心要点
+    html += renderDiagrams();      // L2：逻辑/关系图（核心卖点，靠前大图）
+    html += renderCharts();
+    html += renderConflicts();
+    html += renderQuotes();
+    // L3：章节详情（带 section.chapter / data-chapter，供 selfcheck 统计；默认折叠）
+    html += renderChapters();
+    html += renderFileRelations();
+    html += renderFiles();
+    document.getElementById('app').innerHTML = html || '<p class="empty">' + tx('无可渲染内容。','Nothing to render.') + '</p>';
+
+    var footParts = [];
+    if (meta.generated_at) footParts.push(tx('生成于 ','Generated ') + meta.generated_at);
+    footParts.push('doc-atlas · ' + tx('离线单文件面板','offline single-file dashboard'));
+    document.getElementById('foot').textContent = footParts.join(' · ');
+  }
+
+  function bindNav(){
+    // 树节点点击：滚动 + 展开/折叠
+    document.querySelectorAll('.tree-row').forEach(function(row){
+      row.addEventListener('click', function(e){
+        var li = row.parentElement;
+        var toggle = row.querySelector('.toggle');
+        // 点击折叠箭头区域 → 折叠
+        if (e.target === toggle && li.querySelector('ul')){
+          li.classList.toggle('collapsed');
+          toggle.textContent = li.classList.contains('collapsed') ? '▸' : '▾';
+          return;
+        }
+        var anchor = row.getAttribute('data-anchor');
+        var target = anchor ? document.querySelector(anchor) : null;
+        if (target){
+          // 跳到折叠章节时自动展开
+          if (target.classList && target.classList.contains('chapter') && target.classList.contains('collapsed')){
+            setChapter(target, false); updateModeBtn();
+          }
+          target.scrollIntoView({behavior:'smooth', block:'start'});
+          document.querySelectorAll('.tree-row.active').forEach(function(r){r.classList.remove('active');});
+          row.classList.add('active');
+        }
+        if (window.innerWidth <= 860){ document.getElementById('sidebar').classList.remove('open'); }
+      });
+    });
+    var mt = document.getElementById('menu-toggle');
+    if (mt){
+      mt.addEventListener('click', function(){
+        document.getElementById('sidebar').classList.toggle('open');
+      });
+    }
+  }
+
+  // 渲染所有 Chart.js 图表
+  var chartInstances = [];
+  function cssVar(name){
+    try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+    catch (e){ return ''; }
+  }
+  function applyChartTheme(){
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.color = cssVar('--muted') || '#6a5f4e';
+    Chart.defaults.borderColor = cssVar('--border') || 'rgba(205,191,159,.4)';
+    Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Noto Sans SC',sans-serif";
+    Chart.defaults.font.size = 12;
+  }
+  // 主题协调的图表配色（蓝主 + 朱红 + 赭 + 墨绿…）
+  function chartPalette(){
+    return [cssVar('--accent')||'#2b5fb0', cssVar('--high')||'#b23a2e', cssVar('--accent-2')||'#1d4e6b',
+            cssVar('--medium')||'#a9761c', cssVar('--success')||'#2f6b50', cssVar('--info')||'#1d4e6b'];
+  }
+  function hexA(hex, a){
+    var m = /^#?([0-9a-fA-F]{6})$/.exec(String(hex||'').trim());
+    if (!m) return hex;
+    var n = parseInt(m[1],16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+  }
+  // 给没指定颜色的 dataset 补上协调配色（不覆盖作者已写的颜色）
+  function applyChartPalette(cfg){
+    var pal = chartPalette(), type = cfg.type || 'bar';
+    var dss = (cfg.data && Array.isArray(cfg.data.datasets)) ? cfg.data.datasets : [];
+    var pie = (type === 'pie' || type === 'doughnut' || type === 'polarArea');
+    dss.forEach(function(ds, i){
+      if (pie){
+        var n = ((cfg.data.labels||[]).length) || ((ds.data||[]).length) || pal.length;
+        if (ds.backgroundColor == null) ds.backgroundColor = Array.apply(null,{length:n}).map(function(_,k){ return pal[k % pal.length]; });
+        if (ds.borderColor == null) ds.borderColor = '#fffdf7';
+        if (ds.borderWidth == null) ds.borderWidth = 2;
+      } else if (type === 'line' || type === 'radar'){
+        var c = pal[i % pal.length];
+        if (ds.borderColor == null) ds.borderColor = c;
+        if (ds.backgroundColor == null) ds.backgroundColor = hexA(c, .12);
+        if (ds.pointBackgroundColor == null) ds.pointBackgroundColor = c;
+        if (ds.pointRadius == null) ds.pointRadius = 3;
+        if (ds.borderWidth == null) ds.borderWidth = 2;
+        if (ds.tension == null) ds.tension = .32;
+        if (ds.fill == null) ds.fill = (type === 'line');
+      } else { // bar / 其它
+        var c2 = pal[i % pal.length];
+        if (ds.backgroundColor == null) ds.backgroundColor = (dss.length === 1) ? hexA(c2, .88) : c2;
+        if (ds.borderColor == null) ds.borderColor = c2;
+        if (ds.borderWidth == null) ds.borderWidth = 0;
+        if (ds.borderRadius == null) ds.borderRadius = 5;
+        if (ds.maxBarThickness == null) ds.maxBarThickness = 56;
+      }
+    });
+  }
+  function renderAllCharts(){
+    if (typeof Chart === 'undefined'){ return; }
+    chartTasks.forEach(function(t){
+      var el = document.getElementById(t.id);
+      if (!el) return;
+      try {
+        // 深拷贝防止 Chart 改写原对象；保证含 type/data
+        var cfg = JSON.parse(JSON.stringify(t.cfg));
+        if (!cfg.type) cfg.type = 'bar';
+        if (!cfg.data) cfg.data = {labels:[],datasets:[]};
+        if (!cfg.options) cfg.options = {};
+        if (cfg.options.maintainAspectRatio == null) cfg.options.maintainAspectRatio = false;
+        if (cfg.options.responsive == null) cfg.options.responsive = true;
+        applyChartPalette(cfg);
+        chartInstances.push(new Chart(el.getContext('2d'), cfg));
+      } catch (err){
+        if (window.console) console.warn('chart render failed', t.id, err);
+      }
+    });
+  }
+  // 主题切换后销毁重建（让轴/图例文字颜色跟随主题）
+  function reRenderCharts(){
+    chartInstances.forEach(function(c){ try { c.destroy(); } catch (e){} });
+    chartInstances = [];
+    applyChartTheme();
+    renderAllCharts();
+  }
+
+  // 渲染所有 Mermaid 图（逐个 render，单个失败不影响其它）
+  function renderAllMermaid(){
+    if (typeof mermaid === 'undefined' || !mermaidTasks.length){ return; }
+    try {
+      mermaid.initialize({ startOnLoad:false, securityLevel:'strict', theme:'default' });
+    } catch (e){}
+    mermaidTasks.forEach(function(t, i){
+      var el = document.getElementById(t.id);
+      if (!el) return;
+      var gid = 'mermaidGraph' + i + '_' + Date.now();
+      try {
+        var ret = mermaid.render(gid, t.code);
+        if (ret && typeof ret.then === 'function'){
+          ret.then(function(res){ el.innerHTML = res.svg; })
+             .catch(function(err){ el.innerHTML = '<div class="empty">图渲染失败</div>'; if(window.console) console.warn('mermaid', err); });
+        } else if (ret && ret.svg){
+          el.innerHTML = ret.svg;            // 旧版同步返回
+        } else if (typeof ret === 'string'){
+          el.innerHTML = ret;
+        }
+      } catch (err){
+        el.innerHTML = '<div class="empty">图渲染失败</div>';
+        if (window.console) console.warn('mermaid render failed', t.id, err);
+      }
+    });
+  }
+
+  // ============================ 筛选：重要度 + 来源文件 ============================
+  var FILT = { imps: { high:true, medium:true, low:true }, srcs: {} };
+  files.forEach(function(f){ if (f && f.id != null) FILT.srcs[f.id] = true; });
+
+  function passes(el){
+    var imp = el.getAttribute('data-imp') || 'medium';
+    if (!FILT.imps[imp]) return false;
+    var raw = el.getAttribute('data-files') || '';
+    var fids = raw ? raw.split(',') : [];
+    if (fids.length){
+      var anyOn = fids.some(function(id){ return FILT.srcs[id]; });
+      if (!anyOn) return false;   // 有来源但全被关掉 → 隐藏
+    }
+    return true;                  // 无来源的结构性元素不因来源筛选而隐藏
+  }
+  function hideSectionIfEmpty(secId, childSel){
+    var sec = document.getElementById(secId);
+    if (!sec) return;
+    var any = sec.querySelectorAll(childSel + ':not(.filtered-out)').length > 0;
+    sec.classList.toggle('filtered-out', !any);
+  }
+  function applyFilters(){
+    document.querySelectorAll('.kp[data-imp]').forEach(function(el){ el.classList.toggle('filtered-out', !passes(el)); });
+    document.querySelectorAll('section.chapter[data-imp]').forEach(function(el){ el.classList.toggle('filtered-out', !passes(el)); });
+    document.querySelectorAll('.tree-row[data-imp]').forEach(function(row){
+      var li = row.parentElement;
+      if (li) li.classList.toggle('filtered-out', !passes(row));
+    });
+    hideSectionIfEmpty('sec-keypoints', '.kp');
+  }
+
+  // ============================ 全文搜索（高亮 + 跳转） ============================
+  var SKIP_NODES = { SCRIPT:1, STYLE:1, NOSCRIPT:1, CANVAS:1, MARK:1, BUTTON:1 };
+  function clearHighlights(){
+    var root = document.getElementById('app');
+    if (!root) return;
+    var marks = root.querySelectorAll('mark.search-hit');
+    marks.forEach(function(m){ m.parentNode.replaceChild(document.createTextNode(m.textContent), m); });
+    root.normalize();   // 合并相邻文本节点，避免下次搜索漏掉跨边界匹配
+  }
+  function runSearch(q){
+    clearHighlights();
+    q = (q || '').trim();
+    var cnt = document.getElementById('q-count');
+    var root = document.getElementById('app');
+    if (!q || !root){ if (cnt) cnt.textContent = ''; return; }
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(n){
+        if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        var p = n.parentNode;
+        while (p && p !== root){
+          if (SKIP_NODES[p.nodeName]) return NodeFilter.FILTER_REJECT;
+          if (p.nodeName && p.nodeName.toLowerCase() === 'svg') return NodeFilter.FILTER_REJECT;
+          if (p.classList && (p.classList.contains('mermaid') || p.classList.contains('diagram-wrap'))) return NodeFilter.FILTER_REJECT;
+          p = p.parentNode;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var nodes = [], n; while ((n = walker.nextNode())) nodes.push(n);
+    var ql = q.toLowerCase(), total = 0, first = null;
+    nodes.forEach(function(tn){
+      var text = tn.nodeValue, low = text.toLowerCase(), idx = low.indexOf(ql);
+      if (idx < 0) return;
+      var frag = document.createDocumentFragment(), pos = 0;
+      while (idx >= 0){
+        if (idx > pos) frag.appendChild(document.createTextNode(text.slice(pos, idx)));
+        var mk = document.createElement('mark'); mk.className = 'search-hit';
+        mk.textContent = text.slice(idx, idx + q.length);
+        frag.appendChild(mk); if (!first) first = mk; total++;
+        pos = idx + q.length; idx = low.indexOf(ql, pos);
+      }
+      if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+      tn.parentNode.replaceChild(frag, tn);
+    });
+    // 命中落在折叠章节里时，自动展开确保可见
+    if (total){
+      var expanded = false;
+      root.querySelectorAll('mark.search-hit').forEach(function(mk){
+        var sec = mk.closest ? mk.closest('section.chapter.collapsed') : null;
+        if (sec){ setChapter(sec, false); expanded = true; }
+      });
+      if (expanded) updateModeBtn();
+    }
+    if (cnt) cnt.textContent = total ? (total + tx(' 处匹配',' matches')) : tx('无匹配','No match');
+    if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  // ============================ 主题切换 ============================
+  // ============================ 外观 / 主题 tweaks ============================
+  var TWEAK_KEYS = ['paper','accent','bodyfont','hl','density','theme'];
+  var TWEAK_ATTR = { paper:'data-paper', accent:'data-accent', bodyfont:'data-bodyfont', hl:'data-hl', density:'data-density', theme:'data-theme' };
+  // 外观固定：暖米纸 + 蓝色强调 + 无衬线正文 + 数字高亮 + 松密度 + 日读（无外观面板，不存 localStorage）
+  var TWEAK_DEFAULTS = { paper:'warm', accent:'blue', bodyfont:'sans', hl:'on', density:'airy', theme:'light' };
+  var TWEAKS = {};
+  function loadTweaks(){ TWEAK_KEYS.forEach(function(k){ TWEAKS[k] = TWEAK_DEFAULTS[k]; }); }
+  function saveTweaks(){ /* 外观固定，不持久化 */ }
+  function reflectTweak(k){
+    document.documentElement.setAttribute(TWEAK_ATTR[k], TWEAKS[k]);
+    // 同步控件按下态
+    document.querySelectorAll('[data-tweak="' + k + '"] button').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-val') === TWEAKS[k] ? 'true' : 'false');
+    });
+  }
+  function applyAllTweaks(){ TWEAK_KEYS.forEach(reflectTweak); }
+  function setTweak(k, v){
+    TWEAKS[k] = v; reflectTweak(k); saveTweaks();
+    if (k === 'theme' || k === 'accent' || k === 'paper') reRenderCharts();
+  }
+  // 兼容旧接口
+  function setTheme(t){ setTweak('theme', t); }
+
+  // ============================ 工具区事件绑定 ============================
+  function bindToolbar(){
+    var q = document.getElementById('q');
+    var box = q && q.parentNode;
+    if (q){
+      var timer;
+      q.addEventListener('input', function(){
+        if (box) box.classList.toggle('has-val', !!q.value);
+        clearTimeout(timer);
+        timer = setTimeout(function(){ runSearch(q.value); }, 180);
+      });
+    }
+    var clr = document.getElementById('q-clear');
+    if (clr && q){
+      clr.addEventListener('click', function(){
+        q.value = ''; if (box) box.classList.remove('has-val'); runSearch(''); q.focus();
+      });
+    }
+    document.querySelectorAll('#imp-filter .chip').forEach(function(ch){
+      ch.addEventListener('click', function(){
+        var imp = ch.getAttribute('data-imp');
+        FILT.imps[imp] = !FILT.imps[imp];
+        ch.classList.toggle('off', !FILT.imps[imp]);
+        applyFilters();
+      });
+    });
+    document.querySelectorAll('#src-filter .chip').forEach(function(ch){
+      ch.addEventListener('click', function(){
+        var fid = ch.getAttribute('data-fid');
+        FILT.srcs[fid] = !FILT.srcs[fid];
+        ch.classList.toggle('off', !FILT.srcs[fid]);
+        applyFilters();
+      });
+    });
+  }
+
+  // ============================ 滚动定位高亮（scrollspy） ============================
+  function setupScrollSpy(){
+    var secs = Array.prototype.slice.call(document.querySelectorAll('section.chapter'));
+    if (!secs.length || typeof IntersectionObserver === 'undefined') return;
+    var rowsByAnchor = {};
+    document.querySelectorAll('.tree-row').forEach(function(r){
+      var a = r.getAttribute('data-anchor') || '';
+      (rowsByAnchor[a] = rowsByAnchor[a] || []).push(r);
+    });
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (!en.isIntersecting) return;
+        var anchor = '#ch-' + en.target.getAttribute('data-chapter');
+        document.querySelectorAll('.tree-row.active').forEach(function(r){ r.classList.remove('active'); });
+        (rowsByAnchor[anchor] || []).forEach(function(r){ r.classList.add('active'); });
+      });
+    }, { rootMargin: '-12% 0px -70% 0px', threshold: 0 });
+    secs.forEach(function(s){ obs.observe(s); });
+  }
+
+  // ============================ 章节折叠 / 重点模式 ============================
+  function resizeChartsSoon(){
+    setTimeout(function(){ chartInstances.forEach(function(c){ try { c.resize(); } catch (e){} }); }, 30);
+  }
+  function setChapter(sec, collapsed){
+    if (!sec) return;
+    sec.classList.toggle('collapsed', collapsed);
+    var btn = sec.querySelector('.ch-toggle');
+    if (btn) btn.textContent = collapsed ? tx('展开 ▸','Expand ▸') : tx('收起 ▾','Collapse ▾');
+    if (!collapsed) resizeChartsSoon();
+  }
+  function setAllChapters(collapsed){
+    document.querySelectorAll('section.chapter').forEach(function(sec){ setChapter(sec, collapsed); });
+  }
+  function updateModeBtn(){
+    var btn = document.getElementById('mode-btn');
+    if (!btn) return;
+    var anyOpen = !!document.querySelector('section.chapter:not(.collapsed)');
+    btn.innerHTML = anyOpen ? ('🎯 ' + tx('只看重点','Essentials')) : ('📖 ' + tx('展开全部','Expand all'));
+  }
+  function bindChapterToggles(){
+    document.querySelectorAll('section.chapter').forEach(function(sec){
+      var head = sec.querySelector('.chapter-head');
+      if (!head) return;
+      head.addEventListener('click', function(){
+        setChapter(sec, !sec.classList.contains('collapsed'));
+        updateModeBtn();
+      });
+    });
+  }
+  function bindModeToggle(){
+    var btn = document.getElementById('mode-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      var anyOpen = !!document.querySelector('section.chapter:not(.collapsed)');
+      setAllChapters(anyOpen);   // 有展开 → 全折叠；全折叠 → 全展开
+      updateModeBtn();
+    });
+  }
+
+  // ============================ 逻辑/关系图放大浮层 ============================
+  function openDiagramModal(svgHtml){
+    var modal = document.getElementById('dlg-modal'), inner = document.getElementById('dlg-inner');
+    if (!modal || !inner) return;
+    inner.innerHTML = svgHtml;
+    var svg = inner.querySelector('svg');
+    if (svg){ svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.width='auto'; svg.style.height='auto'; svg.style.minWidth='60vw'; }
+    var hint = document.getElementById('dlg-hint');
+    if (hint) hint.textContent = tx('点击空白处或按 Esc 关闭 · 可滚动查看','Click outside or press Esc to close · scroll to pan');
+    modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  }
+  function closeDiagramModal(){
+    var modal = document.getElementById('dlg-modal');
+    if (!modal) return;
+    modal.classList.remove('open'); modal.setAttribute('aria-hidden','true');
+    var inner = document.getElementById('dlg-inner'); if (inner) inner.innerHTML = '';
+  }
+  function bindDiagramZoom(){
+    var app = document.getElementById('app');
+    if (app){
+      app.addEventListener('click', function(e){
+        var wrap = e.target.closest ? e.target.closest('.diagram-wrap') : null;
+        if (!wrap) return;
+        var m = wrap.querySelector('.mermaid');
+        if (!m || !m.querySelector('svg')) return;
+        openDiagramModal(m.innerHTML);
+      });
+    }
+    var closeBtn = document.getElementById('dlg-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeDiagramModal);
+    var modal = document.getElementById('dlg-modal');
+    if (modal) modal.addEventListener('click', function(e){ if (e.target === modal) closeDiagramModal(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDiagramModal(); });
+  }
+
+  // ============================ 启动 ============================
+  function start(){
+    loadTweaks();
+    buildSidebar();
+    assemble();
+    bindNav();
+    bindToolbar();
+    bindChapterToggles();
+    bindModeToggle();
+    bindDiagramZoom();
+    applyAllTweaks();
+    applyChartTheme();
+    renderAllCharts();
+    renderAllMermaid();
+    applyFilters();
+    setupScrollSpy();
+    updateModeBtn();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>

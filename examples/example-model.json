@@ -1,0 +1,338 @@
+{
+  "meta": {
+    "title": "2024 年云业务季度复盘与年度展望（集成测试 fixture）",
+    "content_lang": "zh",
+    "ui_lang": "zh",
+    "generated_at": null,
+    "stats": {
+      "file_count": 2,
+      "total_pages": 47,
+      "total_words": 18600,
+      "reading_minutes": 62
+    },
+    "executive_summary": [
+      "两份文件分别为 Q3 季度复盘（PPT）与年度战略白皮书（PDF），共同围绕云业务增长展开。",
+      "全年营收口径在两份文件中存在不一致（38 亿 vs 41.2 亿），已在冲突区标注并倾向采用较新的白皮书口径。",
+      "核心结论：云业务连续四个季度双位数增长，但毛利率受基础设施投入拖累，2025 年以提效为主线。",
+      "建议优先关注三大风险：客户集中度、汇率波动、数据中心电力成本。"
+    ]
+  },
+  "files": [
+    {
+      "id": "f1",
+      "name": "Q3-云业务复盘.pptx",
+      "type": "pptx",
+      "pages": 22,
+      "words": 5200,
+      "date": "2024-10-15",
+      "role": "时间序列起点 / 季度视角"
+    },
+    {
+      "id": "f2",
+      "name": "2024-云业务年度白皮书.pdf",
+      "type": "pdf",
+      "pages": 25,
+      "words": 13400,
+      "date": "2025-01-20",
+      "role": "最新版 / 主干口径"
+    }
+  ],
+  "highlights": [
+    { "value": "41.2 亿", "label": "2024 全年云业务营收", "sub": "白皮书口径", "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 12 }] },
+    { "value": "+18%", "label": "Q4 同比增速", "sub": "全年最高", "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 8 }] },
+    { "value": "-2.1pp", "label": "毛利率同比", "sub": "基础设施折旧拖累",
+      "sources": [{ "file_id": "f2", "page": 15 }] },
+    { "value": "47%", "label": "前五大客户营收占比", "sub": "集中度风险", "importance": "medium",
+      "sources": [{ "file_id": "f2", "page": 19 }] }
+  ],
+  "distillation_report": {
+    "source_words": 18600,
+    "compression_ratio": "约 7:1",
+    "section_coverage": "2/2 章已映射",
+    "claims_with_source": "100%（0 条无源）",
+    "todo_ratio": "1 处待核实 / 约 30 数据点 ≈ 3%",
+    "derived_numbers": 2,
+    "unmapped_source_blocks": [],
+    "fact_check": "已核 14 条、修正 1 条、补回 1 条遗漏（阶段二·五）"
+  },
+  "file_relations": {
+    "mermaid": "flowchart LR\n  f1[\"Q3 复盘 PPT\\n季度视角\"] -->|数据汇入更新| f2[\"年度白皮书 PDF\\n主干口径\"]\n  f2 -.->|修正全年营收口径| f1",
+    "note": "白皮书发布晚于季度复盘，全年口径以白皮书为准；季度趋势细节仍以复盘 PPT 为来源。"
+  },
+  "conflicts": [
+    {
+      "id": "c1",
+      "topic": "2024 全年云业务营收",
+      "positions": [
+        {
+          "value": "约 38 亿元（截至 Q3 外推估算）",
+          "source": { "file_id": "f1", "loc": "Slide 9" }
+        },
+        {
+          "value": "41.2 亿元（全年实际）",
+          "source": { "file_id": "f2", "page": 12 }
+        }
+      ],
+      "resolution": "采用白皮书 41.2 亿元口径：发布更晚且为实际而非外推，季度复盘为 Q3 时点的全年预估。",
+      "confidence": "high"
+    }
+  ],
+  "keypoints": [
+    {
+      "id": "k1",
+      "text": "云业务连续四个季度营收双位数同比增长，Q4 增速 18%。",
+      "kind": "数字",
+      "importance": "high",
+      "sources": [
+        { "file_id": "f2", "page": 8 },
+        { "file_id": "f1", "loc": "Slide 5" }
+      ]
+    },
+    {
+      "id": "k2",
+      "text": "2024 全年云业务营收 41.2 亿元，占公司总营收 34%。",
+      "kind": "数字",
+      "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 12 }]
+    },
+    {
+      "id": "k3",
+      "text": "毛利率同比下降 2.1 个百分点，主因新建数据中心折旧与电力成本上升。",
+      "kind": "结论",
+      "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 15 }]
+    },
+    {
+      "id": "k4",
+      "text": "前五大客户贡献营收占比达 47%，客户集中度风险显著。",
+      "kind": "风险",
+      "importance": "medium",
+      "sources": [{ "file_id": "f2", "page": 19 }]
+    },
+    {
+      "id": "k5",
+      "text": "“云原生优先”定义为：新增工作负载默认部署于容器与 Serverless 平台。",
+      "kind": "定义",
+      "importance": "low",
+      "sources": [{ "file_id": "f1", "loc": "Slide 14" }]
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "d1",
+      "title": "云业务增长驱动因素关系图",
+      "kind": "flowchart",
+      "mermaid": "flowchart TD\n  A[客户上云需求] --> B[营收增长]\n  C[基础设施投入] --> D[毛利率承压]\n  B --> E[2025 提效战略]\n  D --> E\n  E --> F[单位经济模型优化]",
+      "caption": "营收增长与成本承压共同推动 2025 年提效战略。",
+      "sources": [
+        { "file_id": "f2", "page": 21 },
+        { "file_id": "f1", "loc": "Slide 18" }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "id": "ch1",
+      "title": "四个季度云业务营收（亿元）",
+      "caption": "数据来源以白皮书全年口径校准。",
+      "chartjs": {
+        "type": "bar",
+        "data": {
+          "labels": ["Q1", "Q2", "Q3", "Q4"],
+          "datasets": [
+            {
+              "label": "营收（亿元）",
+              "data": [9.1, 9.8, 10.6, 11.7]
+            }
+          ]
+        },
+        "options": {
+          "responsive": true,
+          "plugins": { "legend": { "position": "top" } }
+        }
+      },
+      "sources": [{ "file_id": "f2", "page": 9 }]
+    }
+  ],
+  "quotes": [
+    {
+      "id": "q1",
+      "text": "增长不是目的，可持续的单位经济模型才是。",
+      "attribution": "CFO 在年度战略章节",
+      "source": { "file_id": "f2", "page": 23 }
+    }
+  ],
+  "outline": [
+    {
+      "id": "1",
+      "title": "业务表现",
+      "summary": "2024 全年与各季度的营收、增速与毛利表现。",
+      "importance": "high",
+      "sources": [
+        { "file_id": "f2", "page": 8 },
+        { "file_id": "f1", "loc": "Slide 5" }
+      ],
+      "children": [
+        {
+          "id": "1.1",
+          "title": "营收与增速",
+          "summary": "连续四个季度双位数增长，全年 41.2 亿元。",
+          "importance": "high",
+          "sources": [{ "file_id": "f2", "page": 9 }],
+          "children": [
+            {
+              "id": "1.1.1",
+              "title": "季度营收明细",
+              "summary": "Q1–Q4 逐季营收与环比。",
+              "importance": "medium",
+              "sources": [{ "file_id": "f1", "loc": "Slide 6" }]
+            }
+          ]
+        },
+        {
+          "id": "1.2",
+          "title": "盈利能力",
+          "summary": "毛利率同比下降 2.1pp。",
+          "importance": "high",
+          "sources": [{ "file_id": "f2", "page": 15 }]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "战略与风险",
+      "summary": "2025 提效主线与三大风险。",
+      "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 22 }],
+      "children": [
+        {
+          "id": "2.1",
+          "title": "2025 战略主线",
+          "summary": "由规模扩张切换为提效。",
+          "importance": "high",
+          "sources": [{ "file_id": "f2", "page": 22 }]
+        },
+        {
+          "id": "2.2",
+          "title": "主要风险",
+          "summary": "客户集中度、汇率、电力成本。",
+          "importance": "medium",
+          "sources": [{ "file_id": "f2", "page": 19 }]
+        }
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "id": "1",
+      "title": "业务表现",
+      "importance": "high",
+      "sources": [
+        { "file_id": "f2", "page": 8 },
+        { "file_id": "f1", "loc": "Slide 5" }
+      ],
+      "blocks": [
+        {
+          "type": "paragraph",
+          "md": "2024 年云业务**连续四个季度双位数增长**，全年营收按白皮书口径为 41.2 亿元，占公司总营收约 34%。",
+          "sources": [{ "file_id": "f2", "page": 12 }]
+        },
+        {
+          "type": "metric",
+          "title": "本章关键数字",
+          "items": [
+            { "value": "41.2 亿", "label": "全年营收", "sub": "白皮书口径", "sources": [{ "file_id": "f2", "page": 12 }] },
+            { "value": "34%", "label": "占公司总营收", "importance": "high", "sources": [{ "file_id": "f2", "page": 12 }] },
+            { "value": "11.7 亿", "label": "Q4 单季营收", "sources": [{ "file_id": "f1", "loc": "Slide 6" }] }
+          ]
+        },
+        {
+          "type": "callout",
+          "tone": "warn",
+          "title": "口径提示",
+          "md": "全年营收存在 38 亿 / 41.2 亿两种口径，详见冲突区，本章统一采用白皮书 41.2 亿。",
+          "sources": [{ "file_id": "f2", "page": 12 }]
+        },
+        {
+          "type": "keypoints",
+          "items": [
+            {
+              "text": "Q4 同比增速 18%，为全年最高。",
+              "importance": "high",
+              "sources": [{ "file_id": "f2", "page": 8 }]
+            },
+            {
+              "text": "毛利率同比下降 2.1 个百分点。",
+              "importance": "medium",
+              "sources": [{ "file_id": "f2", "page": 15 }]
+            }
+          ]
+        },
+        {
+          "type": "chart",
+          "chart_id": "ch1"
+        },
+        {
+          "type": "table",
+          "title": "逐季营收与环比",
+          "columns": ["季度", "营收（亿元）", "环比"],
+          "rows": [
+            ["Q1", 9.1, "—"],
+            ["Q2", 9.8, "+7.7%"],
+            ["Q3", 10.6, "+8.2%"],
+            ["Q4", 11.7, "+10.4%"]
+          ],
+          "sources": [{ "file_id": "f1", "loc": "Slide 6" }]
+        },
+        {
+          "type": "image",
+          "src": "assets/p1-img1.png",
+          "caption": "白皮书原图：四季度营收趋势曲线（测试用 1×1 PNG）。",
+          "source": { "file_id": "f2", "page": 9 }
+        },
+        {
+          "type": "subsections",
+          "items": [
+            {
+              "id": "1.1",
+              "title": "营收与增速",
+              "summary": "连续四个季度双位数增长，全年 41.2 亿元。",
+              "importance": "high",
+              "sources": [{ "file_id": "f2", "page": 9 }]
+            },
+            {
+              "id": "1.2",
+              "title": "盈利能力",
+              "summary": "毛利率同比下降 2.1pp，主因基础设施折旧。",
+              "importance": "high",
+              "sources": [{ "file_id": "f2", "page": 15 }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "战略与风险",
+      "importance": "high",
+      "sources": [{ "file_id": "f2", "page": 22 }],
+      "blocks": [
+        {
+          "type": "paragraph",
+          "md": "2025 年战略主线由“规模扩张”切换为“单位经济模型提效”，强调云原生优先与成本结构优化。",
+          "sources": [{ "file_id": "f2", "page": 22 }]
+        },
+        {
+          "type": "diagram",
+          "diagram_id": "d1"
+        },
+        {
+          "type": "quote",
+          "quote_id": "q1"
+        }
+      ]
+    }
+  ]
+}
