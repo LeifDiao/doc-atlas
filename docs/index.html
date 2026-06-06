@@ -11,159 +11,158 @@
 <meta property="og:url" content="https://leifdiao.github.io/doc-atlas/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
- --paper:#F8F9F6;--paper-2:#F1F3EE;--ink:#14171C;--ink-soft:#2A2E35;
- --t2:#3C4148;--t3:#5C626B;--t4:#888E96;--t5:#AEB3B9;
- --line:rgba(20,23,28,0.042);--line-major:rgba(20,23,28,0.075);--hair:rgba(20,23,28,0.11);
- --signal:#B23A2E;--signal-soft:rgba(178,58,46,0.07);--signal-line:rgba(178,58,46,0.30);
- --ink-blue:#1d4e6b;--ochre:#9a6a1f;
- --card:rgba(253,253,251,0.84);--card-solid:#FCFDFB;
+ /* surfaces */
+ --bg:#FFFFFF;--bg-2:#F4F6F8;--card:#FFFFFF;
+ /* ink — McKinsey deep navy */
+ --navy:#051C2C;--navy-2:#0A2C42;--ink:#051C2C;
+ --t2:#2C3A45;--t3:#56646E;--t4:#8896A0;--t5:#AEB8BF;
+ /* accent — electric blue */
+ --blue:#2251FF;--blue-deep:#173BC2;--blue-soft:rgba(34,81,255,.065);--blue-line:rgba(34,81,255,.30);
+ /* lines */
+ --line:#E7EBEE;--line-2:#DBE0E4;--hair:#C9D1D6;
+ --serif:'Spectral','Noto Serif SC',Georgia,'Songti SC',serif;
+ --sans:'Hanken Grotesk','Noto Sans SC',-apple-system,'PingFang SC',system-ui,sans-serif;
  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
- --disp:'Space Grotesk',-apple-system,'PingFang SC','Hiragino Sans GB',system-ui,sans-serif;
- --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI','PingFang SC','Hiragino Sans GB',system-ui,sans-serif;
- --shadow:0 1px 0 rgba(20,23,28,.03),0 14px 34px rgba(20,23,28,.055);
+ --shadow:0 1px 2px rgba(5,28,44,.045),0 18px 44px rgba(5,28,44,.07);
+ --shadow-sm:0 1px 2px rgba(5,28,44,.05),0 8px 22px rgba(5,28,44,.05);
 }
 *,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
- font-family:var(--sans);color:var(--ink);line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
- background-color:var(--paper);
- background-image:
-  linear-gradient(var(--line) 1px,transparent 1px),
-  linear-gradient(90deg,var(--line) 1px,transparent 1px),
-  linear-gradient(var(--line-major) 1px,transparent 1px),
-  linear-gradient(90deg,var(--line-major) 1px,transparent 1px);
- background-size:32px 32px,32px 32px,160px 160px,160px 160px;
- background-position:-1px -1px,-1px -1px,-1px -1px,-1px -1px;
- background-attachment:fixed;
+ font-family:var(--sans);color:var(--ink);line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+ background:var(--bg);
 }
-.wrap{max-width:1160px;margin:0 auto;padding:0 30px}
-a{color:var(--signal);text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 40px}
+a{color:var(--blue);text-decoration:none}
 .t-zh{display:none}body.zh .t-zh{display:revert}body.zh .t-en{display:none}
 .mono{font-family:var(--mono)}
 svg{flex:none}
-.lock{position:relative}
-.lock::before,.lock::after{content:"";position:absolute;width:13px;height:13px;pointer-events:none}
-.lock::before{top:-1px;left:-1px;border-top:1.5px solid var(--signal);border-left:1.5px solid var(--signal)}
-.lock::after{bottom:-1px;right:-1px;border-bottom:1.5px solid var(--signal);border-right:1.5px solid var(--signal)}
 
-nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0;position:sticky;top:0;z-index:30;
- backdrop-filter:blur(7px);background:linear-gradient(var(--paper),rgba(248,249,246,.4));border-bottom:1px solid var(--line-major)}
-.brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:600;font-size:18px;letter-spacing:-.4px}
-.brand-mark{width:30px;height:30px;color:var(--signal);display:flex}
-.brand-accent{color:var(--signal)}
-.nav-r{display:flex;align-items:center;gap:22px}
-.nav-r a{color:var(--t3);font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.2px;transition:color .18s}
-.nav-r a:hover{color:var(--ink)}
-.lang-btn{background:transparent;border:1px solid var(--hair);color:var(--t2);padding:5px 12px;font-family:var(--mono);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.4px}
-.lang-btn:hover{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* eyebrow label */
+.eyebrow{display:inline-flex;align-items:center;gap:13px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--blue);letter-spacing:.18em;text-transform:uppercase;margin-bottom:22px}
+.eyebrow .bar{width:26px;height:2px;background:var(--blue);flex:none}
+body.zh .eyebrow{letter-spacing:.1em}
 
-.ruler{display:flex;gap:0;font-family:var(--mono);font-size:9.5px;color:var(--t5);letter-spacing:.5px;padding:10px 0 0;user-select:none}
-.ruler span{flex:1;border-left:1px solid var(--line-major);padding-left:5px}
+/* NAV */
+nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0;position:sticky;top:0;z-index:30;
+ background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px;flex-wrap:nowrap;white-space:nowrap;font-family:var(--sans);font-weight:600;font-size:19px;letter-spacing:-.2px;color:var(--navy)}
+.brand-mark{width:28px;height:28px;color:var(--navy);display:flex}
+.brand-accent{color:var(--blue)}
+.nav-r{display:flex;align-items:center;gap:26px}
+.nav-r a{color:var(--t3);font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;transition:color .18s}
+.nav-r a:hover{color:var(--navy)}
+.lang-btn{background:transparent;border:1px solid var(--hair);color:var(--t2);padding:7px 13px;font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.1em}
+.lang-btn:hover{background:var(--navy);border-color:var(--navy);color:#fff}
 
-.hero{display:grid;grid-template-columns:1.02fr .98fr;gap:46px;align-items:center;padding:48px 0 50px;position:relative}
-.tag-coord{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--signal);letter-spacing:1px;margin-bottom:20px}
-.tag-coord .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 0 var(--signal-line);animation:ping 2.6s ease-out infinite}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(178,58,46,.4)}70%,100%{box-shadow:0 0 0 9px rgba(178,58,46,0)}}
-.hero h1{font-family:var(--disp);font-size:clamp(33px,4.9vw,55px);font-weight:600;letter-spacing:-1.6px;line-height:1.05;margin:0 0 20px}
-.hero h1 .g{color:var(--signal);white-space:nowrap}
-.xh{width:.5em;height:.5em;display:inline-block;vertical-align:.22em;margin-left:.05em;color:var(--signal)}
-.hero-sub{font-size:16px;color:var(--t3);line-height:1.74;margin:0 0 26px;max-width:512px}
-.hero-sub strong{color:var(--ink-soft);font-weight:600}
-.cta{display:flex;gap:11px;flex-wrap:wrap;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 19px;font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.3px;cursor:pointer;transition:all .18s;border:1.5px solid transparent}
-.btn-primary{background:var(--signal);color:#fff}.btn-primary:hover{background:#97271d;transform:translateY(-1px)}
-.btn-ghost{background:transparent;border-color:var(--hair);color:var(--t2)}.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
-.cmd{font-family:var(--mono);font-size:12.5px;background:var(--ink);color:#E9EBEA;padding:11px 15px;display:inline-flex;gap:8px;margin-top:20px;letter-spacing:.2px;max-width:100%;overflow:hidden}
-.cmd .pfx{color:#E59A8E}.cmd .cur{width:7px;height:15px;background:#E59A8E;display:inline-block;animation:blink 1.1s step-end infinite;transform:translateY(2px)}
+/* HERO */
+.hero{display:grid;grid-template-columns:1.04fr .96fr;gap:56px;align-items:center;padding:70px 0 74px}
+.hero h1{font-family:var(--serif);font-size:clamp(34px,4.4vw,52px);font-weight:500;letter-spacing:-1.2px;line-height:1.1;margin:0 0 24px;color:var(--navy)}
+body.zh .hero h1{font-weight:600;letter-spacing:-.5px;line-height:1.14}
+.hero h1 .g{color:var(--blue);white-space:nowrap}
+.xh{width:.46em;height:.46em;display:inline-block;vertical-align:.18em;margin-left:.08em;color:var(--blue)}
+.hero-sub{font-size:16.5px;color:var(--t3);line-height:1.78;margin:0 0 30px;max-width:520px}
+.hero-sub strong{color:var(--navy);font-weight:600}
+.cta{display:flex;gap:13px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;font-family:var(--sans);font-size:13.5px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:all .18s;border:1.5px solid transparent}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--blue);transform:translateY(-1px)}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--navy)}.btn-ghost:hover{border-color:var(--navy);background:var(--bg-2)}
+.cmd{font-family:var(--mono);font-size:12.5px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--navy);padding:12px 16px;display:inline-flex;gap:8px;margin-top:24px;letter-spacing:.1px;max-width:100%;overflow:hidden;align-items:center}
+.cmd .pfx{color:var(--blue);font-weight:500}.cmd .cur{width:7px;height:15px;background:var(--blue);display:inline-block;animation:blink 1.1s step-end infinite;transform:translateY(2px)}
 @keyframes blink{50%{opacity:0}}
 
-/* dashboard preview (left tree + right modules) */
-.preview{position:relative;background:var(--card);backdrop-filter:blur(2px);border:1px solid var(--hair);padding:14px;box-shadow:var(--shadow)}
-.pv-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:9.5px;letter-spacing:.8px;color:var(--t4);margin-bottom:12px;text-transform:uppercase}
-.pv-head b{color:var(--signal);font-weight:600}
-.pv-body{display:grid;grid-template-columns:84px 1fr;gap:12px}
-.pv-toc{font-family:var(--mono);font-size:10px;line-height:1.9;color:var(--t4);border-right:1px solid var(--line-major);padding-right:8px}
-.pv-toc .a{color:var(--signal);font-weight:600}
+/* dashboard preview */
+.preview{position:relative;background:var(--card);border:1px solid var(--line-2);padding:18px;box-shadow:var(--shadow)}
+.pv-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--t4);margin-bottom:15px;text-transform:uppercase;padding-bottom:13px;border-bottom:1px solid var(--line)}
+.pv-head b{color:var(--blue);font-weight:600}
+.pv-body{display:grid;grid-template-columns:90px 1fr;gap:16px}
+.pv-toc{font-family:var(--sans);font-size:10.5px;font-weight:500;line-height:2;color:var(--t4);border-right:1px solid var(--line);padding-right:10px}
+.pv-toc .a{color:var(--blue);font-weight:600}
 .pv-toc .i{padding-left:9px}
 .pv-main{min-width:0}
-.pv-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
-.pv-metric{background:var(--card-solid);border:1px solid var(--line-major);padding:7px 8px}
-.pv-metric .v{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:-.4px;color:var(--ink)}
-.pv-metric .l{font-family:var(--mono);font-size:8px;color:var(--t4);letter-spacing:.2px;margin-top:1px;text-transform:uppercase}
-.pv-metric.hot .v{color:var(--signal)}
-.pv-diagram{background:var(--card-solid);border:1px solid var(--line-major);padding:9px 10px;margin-bottom:9px}
-.pv-diagram .cap{font-family:var(--mono);font-size:8px;color:var(--t4);letter-spacing:.4px;text-transform:uppercase;margin-bottom:7px}
-.pv-flow{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--t3)}
-.pv-node{border:1px solid var(--signal-line);color:var(--signal);padding:3px 7px;background:var(--signal-soft);white-space:nowrap}
-.pv-node.blue{border-color:rgba(29,78,107,.35);color:var(--ink-blue);background:rgba(29,78,107,.06)}
+.pv-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:11px}
+.pv-metric{background:var(--bg-2);border:1px solid var(--line);padding:9px 10px}
+.pv-metric .v{font-family:var(--serif);font-weight:600;font-size:16px;letter-spacing:-.4px;color:var(--navy);white-space:nowrap}
+.pv-metric .l{font-family:var(--sans);font-size:8px;font-weight:600;color:var(--t4);letter-spacing:.08em;margin-top:2px;text-transform:uppercase}
+.pv-metric.hot{background:var(--blue-soft);border-color:var(--blue-line)}
+.pv-metric.hot .v{color:var(--blue)}
+.pv-diagram{background:var(--card);border:1px solid var(--line);padding:11px 12px;margin-bottom:10px}
+.pv-diagram .cap{font-family:var(--sans);font-size:8px;font-weight:600;color:var(--t4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+.pv-flow{display:flex;align-items:center;gap:7px;font-family:var(--sans);font-size:9.5px;font-weight:500;color:var(--t3)}
+.pv-node{border:1px solid var(--blue-line);color:var(--blue);padding:4px 8px;background:var(--blue-soft);white-space:nowrap}
+.pv-node.blue{border-color:var(--navy);color:var(--navy);background:rgba(5,28,44,.05)}
 .pv-arrow{color:var(--t5)}
-.pv-lines span{display:block;height:6px;background:var(--line-major);margin-bottom:6px}
+.pv-lines span{display:block;height:6px;background:var(--line);margin-bottom:7px}
 .pv-lines span:nth-child(1){width:100%}.pv-lines span:nth-child(2){width:86%}.pv-lines span:nth-child(3){width:64%}
-.pv-src{font-family:var(--mono);font-size:8.5px;color:var(--ink-blue);margin-top:8px;display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(29,78,107,.25);padding:2px 6px}
+.pv-src{font-family:var(--mono);font-size:8.5px;color:var(--blue);margin-top:9px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--blue-line);padding:3px 7px}
 
-section.blk{padding:50px 0;border-top:1px solid var(--line-major)}
-.sec-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1.4px;color:var(--signal);margin-bottom:11px;text-transform:uppercase}
-.sec-tag::before{content:"// ";opacity:.6}
-.sec-h{font-family:var(--disp);font-size:clamp(25px,3.3vw,37px);font-weight:600;letter-spacing:-1px;margin:0 0 12px;line-height:1.12}
-.sec-lead{font-size:15.5px;color:var(--t3);max-width:690px;margin:0 0 30px;line-height:1.72}
+/* SECTIONS */
+section.blk{padding:78px 0;border-top:1px solid var(--line)}
+.sec-h{font-family:var(--serif);font-size:clamp(27px,3.5vw,40px);font-weight:500;letter-spacing:-.8px;margin:0 0 14px;line-height:1.16;color:var(--navy)}
+body.zh .sec-h{font-weight:600;letter-spacing:-.3px}
+.sec-lead{font-size:16px;color:var(--t3);max-width:720px;margin:0 0 38px;line-height:1.74}
 
-.grid-frame{position:relative;border:1px solid var(--hair);background:var(--card);backdrop-filter:blur(2px)}
+/* features */
+.grid-frame{position:relative;border:1px solid var(--line-2);background:var(--card)}
 .feat-grid{display:grid;grid-template-columns:repeat(3,1fr)}
-.feat{padding:26px 24px 24px;border-right:1px solid var(--line-major);border-bottom:1px solid var(--line-major);position:relative;transition:background .18s}
+.feat{padding:30px 28px 28px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;transition:background .18s}
 .feat-grid .feat:nth-child(3n){border-right:none}
 .feat-grid .feat:nth-last-child(-n+3){border-bottom:none}
-.feat:hover{background:var(--signal-soft)}
-.feat-coord{position:absolute;top:13px;right:14px;font-family:var(--mono);font-size:10px;color:var(--t5);letter-spacing:1px;transition:color .18s}
-.feat:hover .feat-coord{color:var(--signal)}
-.feat-ico{color:var(--signal);margin-bottom:13px;display:block}
-.feat-ico svg{width:23px;height:23px;display:block}
-.feat-t{font-family:var(--disp);font-size:16.5px;font-weight:600;letter-spacing:-.3px;margin:0 0 7px}
-.feat-d{font-size:13.5px;color:var(--t3);line-height:1.64;margin:0;max-width:35ch}
-.feat-d code{font-family:var(--mono);font-size:.86em;background:var(--paper-2);padding:1px 4px;color:var(--t2)}
+.feat:hover{background:var(--bg-2)}
+.feat-ico{color:var(--blue);margin-bottom:16px;display:block}
+.feat-ico svg{width:24px;height:24px;display:block}
+.feat-t{font-family:var(--sans);font-size:16.5px;font-weight:600;letter-spacing:-.2px;line-height:1.32;margin:0 0 9px;color:var(--navy)}
+.feat-d{font-size:13.5px;color:var(--t3);line-height:1.68;margin:0;max-width:36ch}
+.feat-d code{font-family:var(--mono);font-size:.85em;background:var(--bg-2);padding:1px 5px;color:var(--blue-deep);border:1px solid var(--line)}
 
-.route{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:8px}
-.route::before{content:"";position:absolute;top:19px;left:8%;right:8%;height:1.5px;background:repeating-linear-gradient(90deg,var(--signal-line) 0 7px,transparent 7px 13px)}
-.node{position:relative;padding:0 16px;text-align:left}
-.node-dot{width:38px;height:38px;border:1.5px solid var(--signal-line);background:var(--paper);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--signal);position:relative;z-index:2}
-.node-dot::after{content:"";position:absolute;inset:6px;border:1px solid var(--signal-soft)}
-.node-t{font-family:var(--disp);font-weight:600;font-size:15px;margin:16px 0 5px;letter-spacing:-.2px}
-.node-d{font-size:13px;color:var(--t3);line-height:1.58;max-width:25ch}
-.flow-line{font-family:var(--mono);font-size:12px;color:var(--t3);background:var(--card);border:1px solid var(--hair);padding:15px 18px;line-height:1.95;margin-top:30px;letter-spacing:.2px}
-.flow-line b{color:var(--signal);font-weight:600}
+/* how it works */
+.route{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:10px}
+.route::before{content:"";position:absolute;top:23px;left:9%;right:9%;height:1px;background:var(--line-2)}
+.node{position:relative;padding:0 18px;text-align:left}
+.node-dot{width:46px;height:46px;border:1px solid var(--line-2);background:var(--card);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:18px;font-weight:600;color:var(--navy);position:relative;z-index:2;border-radius:50%}
+.node-t{font-family:var(--sans);font-weight:600;font-size:15.5px;margin:18px 0 6px;letter-spacing:-.1px;color:var(--navy)}
+.node-d{font-size:13.5px;color:var(--t3);line-height:1.62;max-width:26ch}
+.flow-line{font-family:var(--mono);font-size:12px;color:var(--t3);background:var(--bg-2);border:1px solid var(--line);padding:16px 20px;line-height:2;margin-top:36px;letter-spacing:.1px}
+.flow-line b{color:var(--blue);font-weight:500}
 
-.console{position:relative;background:var(--ink);padding:28px 30px;color:#E4E7E5;box-shadow:var(--shadow)}
-.console .bar{display:flex;align-items:center;gap:7px;margin-bottom:18px;font-family:var(--mono);font-size:10.5px;color:#6E7A82;letter-spacing:1px}
-.console .bar i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.14)}
-.console h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0 0 4px;color:#fff;letter-spacing:-.4px}
-.console p{color:#9AA3A8;font-size:13.5px;margin:0 0 16px}
-.console p.note{margin:16px 0 0;font-size:12px;color:#7E878D}
-.code-line{font-family:var(--mono);font-size:12.5px;background:rgba(255,255,255,.05);border-left:2px solid var(--signal);padding:11px 15px;margin:8px 0;color:#E9EBEA;overflow-x:auto;letter-spacing:.2px}
-.code-line.talk{border-left-color:#E59A8E;color:#F0CFC8}
-.code-line .pfx{color:#E59A8E}.code-line::before{content:"$ ";color:#5E6A72}
-.code-line.talk::before{content:"› ";color:#A65a4d}
+/* install console — premium navy band */
+.console{position:relative;background:var(--navy);padding:38px 40px;color:#E4E9ED;box-shadow:var(--shadow)}
+.console .bar{display:flex;align-items:center;gap:8px;margin-bottom:22px;font-family:var(--sans);font-size:10px;font-weight:600;color:#6E8090;letter-spacing:.18em;text-transform:uppercase}
+.console .bar i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16)}
+.console h3{font-family:var(--serif);font-weight:500;font-size:23px;margin:0 0 6px;color:#fff;letter-spacing:-.3px}
+body.zh .console h3{font-weight:600}
+.console p{color:#9DAAB4;font-size:14px;margin:0 0 18px;line-height:1.7}
+.console p.note{margin:20px 0 0;font-size:12.5px;color:#7C8B96;line-height:1.7}
+.console p.note b{color:#C6D0D8;font-weight:600}
+.code-line{font-family:var(--mono);font-size:12.5px;background:rgba(255,255,255,.05);border-left:2px solid var(--blue);padding:13px 17px;margin:9px 0;color:#E9EDF0;overflow-x:auto;letter-spacing:.1px}
+.code-line.talk{border-left-color:#5E7BFF;color:#C9D3F5}
+.code-line .pfx{color:#7E9AFF}.code-line::before{content:"$ ";color:#5E7080}
+.code-line.talk::before{content:"› ";color:#5E7BFF}
 
-footer{padding:34px 0 56px;border-top:1px solid var(--line-major);color:var(--t4);font-family:var(--mono);font-size:11.5px;letter-spacing:.3px}
-footer a{color:var(--t3)}footer a:hover{color:var(--signal)}
-.foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:center}
+/* footer */
+footer{padding:40px 0 60px;border-top:1px solid var(--line);color:var(--t4);font-family:var(--sans);font-size:12.5px;letter-spacing:.01em}
+footer a{color:var(--t3);font-weight:500}footer a:hover{color:var(--blue)}
+.foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
 
 @media (max-width:820px){
- .hero{grid-template-columns:1fr;gap:34px;padding:36px 0}
+ .wrap{padding:0 24px}
+ .hero{grid-template-columns:1fr;gap:40px;padding:46px 0 50px}
  .feat-grid{grid-template-columns:1fr}
  .feat{border-right:none!important}
  .feat-grid .feat:last-child{border-bottom:none}
- .route{grid-template-columns:repeat(2,1fr);gap:26px 0}.route::before{display:none}
+ .route{grid-template-columns:repeat(2,1fr);gap:32px 0}.route::before{display:none}
  .nav-r a:not(.keep){display:none}
- .ruler{display:none}
+ section.blk{padding:54px 0}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
   <nav>
-    <div class="brand"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none"><rect x="6" y="3" width="15" height="20" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 8h7M10 12h7M10 16h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="21" cy="21" r="6" fill="var(--paper)" stroke="currentColor" stroke-width="1.5"/><path d="M21 18.4v5.2M18.4 21h5.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>doc<span class="brand-accent">-atlas</span></div>
+    <div class="brand"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none"><rect x="6" y="3" width="15" height="20" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 8h7M10 12h7M10 16h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="21" cy="21" r="6" fill="var(--bg)" stroke="currentColor" stroke-width="1.5"/><path d="M21 18.4v5.2M18.4 21h5.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>doc<span class="brand-accent">-atlas</span></div>
     <div class="nav-r">
       <a href="#features"><span class="t-en">FEATURES</span><span class="t-zh">特性</span></a>
       <a href="./sample-dashboard.html"><span class="t-en">SAMPLE</span><span class="t-zh">样例</span></a>
@@ -172,19 +171,17 @@ footer a{color:var(--t3)}footer a:hover{color:var(--signal)}
     </div>
   </nav>
 
-  <div class="ruler"><span>00</span><span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span><span>08</span><span>09</span><span>10</span><span>11</span></div>
-
   <!-- HERO -->
   <header class="hero">
     <div>
-      <div class="tag-coord"><span class="dot"></span><span class="t-en">DOCS → DASHBOARD · CLAUDE CODE SKILL</span><span class="t-zh">文档 → 面板 · CLAUDE CODE 技能</span></div>
+      <div class="eyebrow"><span class="bar"></span><span class="t-en">DOCS → DASHBOARD · CLAUDE CODE SKILL</span><span class="t-zh">文档 → 面板 · CLAUDE CODE 技能</span></div>
       <h1>
-        <span class="t-en">Turn a stack of docs into<br>one <span class="g">dashboard<svg class="xh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>.</span>
+        <span class="t-en">Turn a stack of docs<br>into one <span class="g">dashboard<svg class="xh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>.</span>
         <span class="t-zh">一摞文档,<br>梳成一张<span class="g">面板<svg class="xh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>。</span>
       </h1>
       <p class="hero-sub">
-        <span class="t-en">Point it at a folder of PDFs / Word / PPT / Excel / EPUB. doc-atlas normalizes, merges across files, surfaces conflicts, and renders <strong>one offline, self-contained HTML dashboard</strong> — a left TOC tree, modular content on the right, a big logic diagram as the star, and <strong>every claim traceable to file + page.</strong></span>
-        <span class="t-zh">把它指向一个装着 PDF / Word / PPT / Excel / EPUB 的文件夹。doc-atlas 归一化、跨文件合并、把冲突显式列出,渲染成<strong>一张离线、自包含的 HTML 面板</strong>——左侧目录树、右侧模块化内容、逻辑大图当主角,而且<strong>每条结论都能溯源到「哪个文件第几页」。</strong></span>
+        <span class="t-en">"Summarize this PDF" just hands you more to read. doc-atlas does the opposite: point it at a folder of PDFs / Word / PPT / Excel / EPUB, and it merges across files, surfaces the numbers and conclusions that clash, and renders <strong>one offline, self-contained HTML dashboard</strong> — a big logic diagram as the star, TOC on the left, modules on the right, and <strong>every number one click from the page it came from.</strong></span>
+        <span class="t-zh">「帮我总结这个 PDF」给你的只是更多要读的字。doc-atlas 反过来:把它指向一个装着 PDF / Word / PPT / Excel / EPUB 的文件夹,它跨文件合并、把互相打架的数字和结论显式挑出来,炼成<strong>一张离线、自包含的 HTML 面板</strong>——逻辑大图当主角,左目录右模块,<strong>每个数字点一下都能回到它出自的那一页。</strong></span>
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="#install"><span class="t-en">INSTALL ▸</span><span class="t-zh">安装 ▸</span></a>
@@ -194,7 +191,7 @@ footer a{color:var(--t3)}footer a:hover{color:var(--signal)}
     </div>
 
     <!-- PREVIEW -->
-    <div class="preview lock">
+    <div class="preview">
       <div class="pv-head"><span><span class="t-en">DASHBOARD</span><span class="t-zh">面板</span></span><span><b>2</b> <span class="t-en">files</span><span class="t-zh">文件</span> · <b>47</b> <span class="t-en">pages</span><span class="t-zh">页</span></span></div>
       <div class="pv-body">
         <div class="pv-toc">
@@ -223,24 +220,24 @@ footer a{color:var(--t3)}footer a:hover{color:var(--signal)}
 
   <!-- FEATURES -->
   <section class="blk" id="features">
-    <div class="sec-tag"><span class="t-en">Why doc-atlas</span><span class="t-zh">凭什么用它</span></div>
+    <div class="eyebrow"><span class="bar"></span><span class="t-en">Why doc-atlas</span><span class="t-zh">凭什么用它</span></div>
     <h2 class="sec-h"><span class="t-en">Read the panel, not the pile.</span><span class="t-zh">看面板,不必再翻那一摞。</span></h2>
-    <p class="sec-lead"><span class="t-en">A "summarize this PDF" tool gives you more text to read. doc-atlas does the opposite: it consolidates across files, surfaces where they disagree, distills the result into a scannable visual panel — and keeps every number one click from the page it came from.</span><span class="t-zh">「帮我总结这个 PDF」给你的是更多要读的字。doc-atlas 反过来:跨文件合并、把矛盾的地方挑出来、把结果炼成一张能扫读的可视化面板——而且每个数字点一下就能回到它出自的那一页。</span></p>
-    <div class="grid-frame lock">
+    <p class="sec-lead"><span class="t-en">A pile of files to decide on, too slow to read one by one. doc-atlas doesn't hand you yet another summary — it pulls them into one panel where you grab the main thread in ten seconds, click in for detail, and trace any number back to its page, so you call it faster and with more confidence.</span><span class="t-zh">一摞文件要决策,一篇篇啃太慢。doc-atlas 不是再多给你一篇摘要,而是把它们收成一张能十秒抓主线、要细节再点开、每个数字都能回溯的面板——让你更快也更稳地拍板。</span></p>
+    <div class="grid-frame">
       <div class="feat-grid">
-        <div class="feat"><span class="feat-coord">A1</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><div class="feat-t"><span class="t-en">Any format → one layer</span><span class="t-zh">任意格式 → 统一中间层</span></div><p class="feat-d"><span class="t-en">PDF / Word / PPT / Excel / HTML / EPUB / Markdown all normalize to a Markdown layer (via markitdown). PDF tables keep their numeric columns; scanned PDFs fall back to OCR. Page numbers and images survive for traceability.</span><span class="t-zh">PDF / Word / PPT / Excel / HTML / EPUB / Markdown 全部归一化成 Markdown 中间层(用 markitdown)。PDF 表格保住数值列;扫描版走 OCR 回退。页码和图片都留着,方便溯源。</span></p></div>
-        <div class="feat"><span class="feat-coord">A2</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10M7 12h10M7 16h6"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span><div class="feat-t"><span class="t-en">Merge, don't list</span><span class="t-zh">是合并,不是罗列</span></div><p class="feat-d"><span class="t-en">Multiple files are de-duplicated and woven into one unified outline — not summarized one by one. When numbers, dates, or conclusions disagree, the conflict is shown explicitly instead of silently picking one.</span><span class="t-zh">多个文件去重后织成一张统一目录——不是逐文件摘要。当数字 / 日期 / 结论打架,冲突会被显式列出,而不是悄悄替你选一个。</span></p></div>
-        <div class="feat"><span class="feat-coord">A3</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7 7l4 9M17 7l-4 9"/></svg></span><div class="feat-t"><span class="t-en">The logic diagram is the star</span><span class="t-zh">逻辑图是主角</span></div><p class="feat-d"><span class="t-en">The core causality / relationships become a prominent, full-width diagram you can click to zoom — not a footnote. Plus data charts (Chart.js) wherever the numbers deserve a picture.</span><span class="t-zh">核心因果 / 关系做成醒目的整行大图,点击可放大——不是塞在角落的脚注。数字该上图的地方,再配数据图表(Chart.js)。</span></p></div>
-        <div class="feat"><span class="feat-coord">B1</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><div class="feat-t"><span class="t-en">Distilled + traceable</span><span class="t-zh">炼化 + 可溯</span></div><p class="feat-d"><span class="t-en">Every claim carries a source badge back to file + page. A distillation report shows coverage, compression ratio, and what's still to verify — and an adversarial fact-check refutes high-risk claims against the source before rendering.</span><span class="t-zh">每条结论都挂着回到「文件 + 页码」的来源角标。炼化体检表给出覆盖率、压缩比、待核实占比;渲染前还有一道对抗式核查,拿高风险结论回原件证伪。</span></p></div>
-        <div class="feat"><span class="feat-coord">B2</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><div class="feat-t"><span class="t-en">Structured render, offline</span><span class="t-zh">结构化渲染,离线可开</span></div><p class="feat-d"><span class="t-en">The AI only writes a structured <code>model.json</code>; a deterministic renderer compiles it to one <code>dashboard.html</code>. Stable, self-checkable, token-light. Images are inlined as base64 — double-click, no server.</span><span class="t-zh">AI 只产出结构化 <code>model.json</code>,确定性渲染器把它编译成单个 <code>dashboard.html</code>。稳定、可无头自检、省 token。图片 base64 内嵌——双击即开,不用服务器。</span></p></div>
-        <div class="feat"><span class="feat-coord">B3</span><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg></span><div class="feat-t"><span class="t-en">Paper skin, your language</span><span class="t-zh">纸本皮肤,跟你的语言</span></div><p class="feat-d"><span class="t-en">A warm rice-paper, blue-ink, magazine-style layout that's a pleasure to read. It asks which language you want the panel in before scanning, then keeps the whole dashboard — content and UI — in it.</span><span class="t-zh">暖米纸 + 蓝墨 + 杂志式版面,读起来舒服。扫描前先问你要哪种语言的面板,然后整张面板——内容和界面——都用它。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><div class="feat-t"><span class="t-en">Any format in, not a number lost</span><span class="t-zh">什么格式都能进,数字一个不丢</span></div><p class="feat-d"><span class="t-en">Drop in PDF / Word / PPT / Excel / HTML / EPUB / Markdown and it all flattens into one readable layer. PDF tables are re-extracted by row and column so the numeric columns survive; scanned files fall back to OCR — a lot of figures that "aren't in the original" are really just table columns a plain conversion dropped. Page numbers and images are kept too, so every number can point back to the page it came from.</span><span class="t-zh">PDF / Word / PPT / Excel / HTML / EPUB / Markdown 直接扔进去,统一拍平成一层可读内容。PDF 表格按行列重抽、保住数值列,扫描件自动走 OCR——很多「看似原文没写」的数,其实是普通转换把表格列丢了。页码和图片也都留着,后面每个数字才能指回原文哪一页。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10M7 12h10M7 16h6"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span><div class="feat-t"><span class="t-en">It fuses them into one, not a list of summaries</span><span class="t-zh">是把它们捏成一张,不是一篇篇罗列</span></div><p class="feat-d"><span class="t-en">Multiple files are de-duplicated first, then woven into one unified outline — not a summary per file. When numbers, dates, or conclusions across files don't match, the conflict is laid out plainly for you to judge instead of silently picking one — exactly where multi-file work trips you up is where this earns its keep.</span><span class="t-zh">多个文件先去重,再织成一张统一目录,而不是逐个文件给你一段摘要。当几份文件的数字、日期、结论对不上,冲突会被明明白白摆出来让你自己判断,而不是悄悄替你选一个——多文件最容易被坑的地方,恰恰也是它最值钱的地方。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7 7l4 9M17 7l-4 9"/></svg></span><div class="feat-t"><span class="t-en">See at a glance what drives what, where money flows</span><span class="t-zh">一眼看清谁影响谁、钱怎么流</span></div><p class="feat-d"><span class="t-en">After a full read, the core causality and relationships across the documents become one full-width diagram you can click to zoom — not a footnote in the corner. What drives what, where the money flows, where risk piles up — one picture makes it clear; charts come in wherever numbers should do the talking. It's your fastest way to a whole-picture judgment.</span><span class="t-zh">通读之后,整套文档的核心因果和关系会被画成一张整行大图,点击放大,而不是塞在角落的脚注。谁影响谁、钱怎么流、风险卡在哪,一张图就交代清楚;该用数字说话的地方再配上图表。这是你最快建立全局判断的入口。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><div class="feat-t"><span class="t-en">Every number traces back — so you can trust the panel</span><span class="t-zh">每个数字都能回溯,你才敢信这张面板</span></div><p class="feat-d"><span class="t-en">Every claim carries a badge back to file + page — one click to check it. A health-check report tells you how much was covered, how much was compressed, and how much is still to verify; and before rendering, an adversarial pass takes the high-risk numbers and conclusions back to the source to refute and re-check them — so reading the panel is enough, no going back to the PDFs.</span><span class="t-zh">每条结论都挂着回到「文件 + 页码」的角标,点一下就能核对。一张体检表告诉你覆盖了多少、压了多少、还有多少待核实;渲染前再派一道对抗式核查,拿高风险的数字和结论回原件证伪、重新验算——让你看面板就够,不必再回去翻 PDF。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><div class="feat-t"><span class="t-en">Send it to anyone — it opens intact, never falls apart</span><span class="t-zh">发给谁都原样打开,不会散架</span></div><p class="feat-d"><span class="t-en">The output is a single <code>dashboard.html</code> with all content and images packed inside: send it to a colleague or drop it into an archive and they double-click to see exactly what you saw — no missing images, no broken layout. Behind it, the AI only produces a structured <code>model.json</code> and a fixed renderer draws everything, so every output comes out consistent — not great today and a mess tomorrow.</span><span class="t-zh">产出是单个 <code>dashboard.html</code>,所有内容和图片都打包在里面:发给同事、丢进存档,对方双击就能原样看到,不会缺图、不会跑版。背后是 AI 只产出结构化的 <code>model.json</code>、由固定渲染器统一出图,所以每次产出都稳定一致,不会今天好看明天乱。</span></p></div>
+        <div class="feat"><span class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg></span><div class="feat-t"><span class="t-en">Asks Chinese or English first, in a layout easy on the eyes</span><span class="t-zh">先问你要中文还是英文,版面读着舒服</span></div><p class="feat-d"><span class="t-en">Before it starts, it asks which language you want the panel in, then keeps the whole thing — content and UI — in it; numbers, proper nouns, and original quotes stay untouched. A warm rice-paper, blue-ink, magazine-style layout with key numbers auto-highlighted and room to breathe — a panel you'll actually sit with, not skim once and close.</span><span class="t-zh">开工前先问你想要哪种语言的面板,然后整张面板——内容和界面——都用你选的语言;数字、专名、原文引用一律保留不动。暖米纸配蓝墨的杂志式版面,关键数字自动高亮,留白舒展,是张你愿意盯着看、而不是匆匆扫一眼就关掉的面板。</span></p></div>
       </div>
     </div>
   </section>
 
   <!-- HOW -->
   <section class="blk" id="how">
-    <div class="sec-tag"><span class="t-en">How it works</span><span class="t-zh">它怎么跑</span></div>
+    <div class="eyebrow"><span class="bar"></span><span class="t-en">How it works</span><span class="t-zh">它怎么跑</span></div>
     <h2 class="sec-h"><span class="t-en">The AI writes structure. The renderer draws.</span><span class="t-zh">AI 写结构,渲染器作图。</span></h2>
     <div class="route">
       <div class="node"><div class="node-dot">01</div><div class="node-t"><span class="t-en">Scan</span><span class="t-zh">扫描</span></div><div class="node-d"><span class="t-en">Pick the panel language, scan the folder, and confirm which documents to include.</span><span class="t-zh">选面板语言,扫描文件夹,跟你确认纳入哪些文档。</span></div></div>
@@ -256,9 +253,9 @@ footer a{color:var(--t3)}footer a:hover{color:var(--signal)}
 
   <!-- INSTALL -->
   <section class="blk" id="install">
-    <div class="sec-tag"><span class="t-en">Install</span><span class="t-zh">安装</span></div>
+    <div class="eyebrow"><span class="bar"></span><span class="t-en">Install</span><span class="t-zh">安装</span></div>
     <h2 class="sec-h"><span class="t-en">One clone, then just talk.</span><span class="t-zh">一条 clone,然后说人话。</span></h2>
-    <div class="console lock">
+    <div class="console">
       <div class="bar"><i></i><i></i><i></i><span>CLAUDE CODE SKILL</span></div>
       <h3><span class="t-en">Install as a skill</span><span class="t-zh">作为技能安装</span></h3>
       <p><span class="t-en">Clone into your skills folder, then trigger it from the folder that holds your documents:</span><span class="t-zh">clone 进你的 skills 目录,然后在装着文档的文件夹里触发:</span></p>
