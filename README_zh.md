@@ -1,4 +1,4 @@
-# doc-atlas
+# Doc Atlas
 
 > **把一份或多份文档（PDF / Word / PPT / Excel / HTML / EPUB / Markdown…）梳理整合成一个精美的、离线可开的单文件可视化信息面板的 Claude Code 技能。**
 

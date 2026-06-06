@@ -1,4 +1,4 @@
-# doc-atlas
+# Doc Atlas
 
 > **A Claude Code skill that distills one or more documents (PDF / Word / PPT / Excel /
 > HTML / EPUB / Markdown…) into a single, polished, offline, self-contained visual
