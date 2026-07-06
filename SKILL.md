@@ -32,47 +32,41 @@ OUT="./doc-atlas-out"                          # 产物目录，落在用户当�
 
 ## 工作流总览（六步）
 
-0. **定语言 + 扫描确认**：**先问用户要哪种语言的面板**，再扫描当前文件夹、与用户确认纳入哪些文件。
-1. **归一化**：每个被确认的文件 → `workspace/<name>/{content.md, assets/, meta.json}`（PDF 表格走结构化抽取保数值列）。
-2. **梳理合并（核心）**：通读、去重 / 识冲突 / 互补 / 判关系，重组成 `model.json`；写完做**完整性批判第二遍**并填 `distillation_report` 自检。
+0. **扫描 + 一次性确认**：先扫描当前文件夹（只读无害），再**用一次 AskUserQuestion 同屏问两件事**——输出语言 + 纳入哪些文件。
+1. **归一化**：每个被确认的文件 → `workspace/<name>/{content.md, assets/, meta.json}`（PDF 逐页文本带**页锚**、表格走结构化抽取保数值列；源未变自动跳过）。
+2. **梳理合并（核心）**：通读、去重 / 识冲突 / 互补 / 判关系，重组成 `model.json`；写完做**完整性批判第二遍**并填 `distillation_report`（含数值字段）自检。
 3. **事实核查（对抗式）**：对**对外/高风险**文档，派 subagent **回原件证伪**，修正 `❌/➖` 后再渲染（低风险单文件可内联自查）。
-4. **渲染**：`model.json (+workspace) → dashboard.html`（单文件、离线）。
+4. **渲染**：`model.json (+workspace) → dashboard.html`（单文件、零外链、断网可开；渲染前自动跑 `validate_model.py` 机器校验）。
 5. **自检交付**：无头校验无报错、抽查溯源，并把炼化体检/核查结论讲给用户。
 
 ---
 
-## 阶段零：先定语言，再扫描确认（顺序不能反）
+## 阶段零：扫描 + 一次性确认（语言与文件同屏问，减少往返）
 
-### 0.1 先问输出语言（关键，必须在扫描之前做）
+### 0.1 先扫描目标文件夹（只读，无副作用）
 
-`/doc-atlas` 一旦生效，**第一件事不是扫描，而是问用户：想要哪种语言的面板？** 这一步决定了后面所有 AI 撰写的文案（执行摘要、要点、章节标题与小结、图表标签）用什么语言。用 AskUserQuestion（或直接提问）给出常见选项：
+```bash
+python3 "$SKILL_DIR/scripts/scan_docs.py" .        # 或换成用户指定的文件夹路径
+```
 
-> 你想要哪种语言的信息面板？ **① 中文 ② English ③ 跟随文档原语言 ④ 其他（请说明）**
+`scan_docs.py` 递归列出当前文件夹里所有候选文档（pdf / word / ppt / excel / html / epub / md / txt…），自动跳过隐藏目录、`.venv`、`node_modules`、`doc-atlas-out` 以及含 `SKILL.md` 的 skill 包目录。
 
-把用户的选择记为 `UI_LANG`，并贯穿全程：
+### 0.2 一次 AskUserQuestion 同屏确认两件事（不要拆成两轮）
+
+拿到清单后**必须与用户确认，不要擅自全量开跑**。把编号清单（文件名 / 类型 / 大小）呈现给用户，然后用**一次** AskUserQuestion 同时问：
+
+1. **输出语言**：「你想要哪种语言的信息面板？ ① 中文 ② English ③ 跟随文档原语言 ④ 其他」
+2. **文件取舍**：「以上文件是否都纳入梳理整合？要去掉哪些？有没有遗漏（比如埋在子目录里的）？」
+
+多文件时可在同一表单里追加第三问：它们大概什么关系（同主题不同版本 / 时间序列 / 总分 / 互相引用），有助于阶段二定合并策略。
+
+**语言选择记为 `UI_LANG`，贯穿全程**：
 - `meta.ui_lang` = 用户选择；`meta.content_lang` = 文档主要语言（二者可不同）。
 - **所有 AI 撰写的叙述性文案一律用 `UI_LANG`**（哪怕原文是另一种语言，也要在炼化时翻译/转写成 `UI_LANG`）。
 - **事实保真不受影响**：数字、专有名词、逐字引用（quotes）保留原文，可在 `UI_LANG` 里补一句释义；溯源角标（文件名/页码）原样。
 - 用户没明确表态时，缺省 = 跟随文档主要语言。
 
-**确认了语言之后**，再进入 0.2 扫描。
-
-### 0.2 扫描目标文件夹
-
-```bash
-/usr/bin/python3 "$SKILL_DIR/scripts/scan_docs.py" .        # 或换成用户指定的文件夹路径
-```
-
-`scan_docs.py` 递归列出当前文件夹里所有候选文档（pdf / word / ppt / excel / html / epub / md / txt…），自动跳过隐藏目录、`.venv`、`node_modules`、`doc-atlas-out` 以及含 `SKILL.md` 的 skill 包目录。
-
-### 0.3 与用户确认要纳入哪些
-
-拿到清单后**必须与用户确认，不要擅自全量开跑**：
-
-1. 把编号清单（文件名 / 类型 / 大小）原样呈现给用户。
-2. 明确询问：**这些是否都要纳入梳理整合？要去掉哪些？有没有遗漏（比如埋在子目录里的）？**
-3. 多文件时顺便问一句它们大概什么关系（同主题不同版本 / 时间序列 / 总分 / 互相引用），有助于阶段二定合并策略。
-4. **等用户确认后**，用确认过的文件清单进入阶段一。
+**等用户确认后**，用确认过的文件清单进入阶段一。
 
 ---
 
@@ -99,23 +93,24 @@ fi
 
 ### 1.1 逐个文件归一化
 
-对**每个被确认的**输入文件跑归一化（脚本用绝对路径调，人留在用户文件夹里）：
+对**每个被确认的**输入文件跑归一化（脚本用绝对路径调，人留在用户文件夹里）。**必须按确认清单顺序传 `--file-id f1/f2/...`**——阶段二 `model.json` 的 `files[].id` 要与之一致，`validate_model.py` 靠这条链做页码越界核查：
 
 ```bash
-"$VENV_PY" "$SKILL_DIR/scripts/normalize.py" "输入文件.pdf" --out "$OUT/workspace/"
+"$VENV_PY" "$SKILL_DIR/scripts/normalize.py" "输入文件.pdf" --out "$OUT/workspace/" --file-id f1
 # 产出： $OUT/workspace/<name>/{content.md, assets/, meta.json}
+# 源文件未变时自动跳过复用（--force 强制重跑）
 ```
 
-三件套各司其职，缺一不可（Markdown 本身会丢页码和图片，靠后两者补回**溯源能力**）：
-- `content.md` — markitdown 输出的正文；**PDF 的表格另由 PyMuPDF 按行×列结构化抽取，追加在文末「结构化抽取的表格」一节**（保住数值列），是阶段二的唯一阅读对象。
+三件套各司其职，缺一不可：
+- `content.md` — 阶段二的唯一阅读对象。**PDF 走 PyMuPDF 逐页文本，每页前有页锚 `<!-- [doc-atlas] p.N -->`——写 SourceRef.page 时直接读锚，不许猜**；表格另按行×列结构化抽取，追加在文末「结构化抽取的表格」一节（保住数值列）。非 PDF 由 markitdown 转换（无页码概念，用 `loc` 定位）。
 - `assets/` — 用 PyMuPDF 等额外提取的有信息量图片（图表 / 流程图 / 示意图），供 model 的 `image` block 引用。
-- `meta.json` — 标题→页码/位置映射、文件名、页数、字数、文档类型、日期、`tables`（表格登记：页码+行列数+置信度）、`table_extraction`（整体表格抽取状态），是所有 `SourceRef` 能指回"哪个文件第几页"的依据。
+- `meta.json` — `page_map`（页→偏移/首行）、标题索引、文件名、页数、字数、文档类型、日期（`date_source` 标注来源：`content` 可信 / `mtime` 兜底不可作权威性依据）、`tables`（表格登记：页码+行列数+置信度）、`table_extraction`（整体表格抽取状态），是 `SourceRef` 程序侧核查的依据。
 
 **表格保真很关键**：很多"看似原文没写"的数值，其实是 markitdown 把表格列打乱/丢列造成的。`normalize.py` 用 `page.find_tables()` 把表格重抽成二维 Markdown 表并登记置信度——阶段二据此判断「原文确实没有」还是「我们没抽好、要回看 PDF 原图」（见阶段二纪律）。
 
 **扫描版 PDF 的 OCR 回退**：当 PDF 是扫描件、markitdown 提不出文字层时，`normalize.py` 会自动走 OCR 回退把图片页转成文本（OCR 结果置信度较低，阶段二引用时倾向标注「（待核实）」）。
 
-> 用 `$VENV_PY`（py3.11）做归一化；render / selfcheck 一律用系统 `/usr/bin/python3`（见阶段四、五）。两者不要混用。
+> 用 `$VENV_PY` 做归一化（markitdown/pymupdf 只装在 venv 里）；render / validate / selfcheck 用系统 `python3`（stdlib only，见阶段三、四、五）。两者不要混用。
 
 ---
 
@@ -166,14 +161,19 @@ fi
 **"高度炼化" ≠ "变短"**，它要同时满足：①跨文件/跨章去重；②升维归纳（从"原文怎么说"升到"结论/因果/对比"）；③关键信息（数字/标准号/参数/前置条件）零丢失且溯源；④重要性分级反映"对决策的重要性"。
 
 - **完整性批判第二遍（必做）**：第一遍写完 model.json 后，**重读 source 自问**："哪个**重要数字 / 前置条件 / 结论**原文有、model 却没有？" 把找到的补回去，循环到"再读一遍也挑不出新的"。
-- **填 `distillation_report` 并自检阈值**（顶层可选字段，强烈建议给，交付时讲给用户）：
-  - `section_coverage` **必须 = 100%**（每个源章节至少映射到一个 outline 节点），缺章回去补。
-  - `todo_ratio > 10%` → **先别交付**：多半是表格数值列没抽好（看 `meta.tables` / `table_extraction`），回查 PDF 原图能补的补回来。
-  - `claims_with_source < 100%` → 有无源声明，要么补源要么删。
-  - `compression_ratio` 落在 ~3:1 到 ~10:1 才算"既炼又不漏"；接近 1:1 = 只是搬运。
+- **填 `distillation_report` 并自检阈值**（顶层可选字段，强烈建议给，交付时讲给用户）。**数值字段必须给全**（`sections_total/sections_mapped`、`claims_total/claims_with_source_count`、`todo_count/data_points`、`compression_ratio_x`），`validate_model.py` 据此机器执行纪律，展示文案字段可另给：
+  - 章节覆盖 **必须 = 100%**（`sections_mapped == sections_total`），缺章回去补。
+  - 待核实占比 `todo_count/data_points > 10%` → **先别交付**（校验器直接拦）：多半是表格数值列没抽好（看 `meta.tables` / `table_extraction`），回查 PDF 原图能补的补回来。
+  - 溯源率 `claims_with_source_count < claims_total` → 有无源声明，要么补源要么删。
+  - `compression_ratio_x` 落在 ~3 到 ~10 才算"既炼又不漏"；接近 1 = 只是搬运。
 - **"待核实" 只用于「原文确实没写」**，**严禁用于「本工具没抽出来」**。后者要回查原件（`meta.json` 的页码 / `assets/` 原图 / 用 Read 工具 pages 参数读原 PDF）补回真值；分不清就当成"要回查"，不要默默标"待核实"后被当成"原文没有"。
 
-**纪律**：一切结论溯源、不编造；超长文档**分批读**再汇总，别漏后半部分。写完建议**对照 `schema/model.schema.json` 自检**结构合法再进入阶段三。
+**纪律**：一切结论溯源、不编造；PDF 的 `SourceRef.page` **必须来自 content.md 里的页锚**（`<!-- [doc-atlas] p.N -->`），不许凭印象写；超长文档**分批读**再汇总，别漏后半部分。写完**必须跑机器校验**（结构 / 交叉引用 / 页码越界 / 炼化阈值），全绿再进入阶段三：
+
+```bash
+python3 "$SKILL_DIR/scripts/validate_model.py" "$OUT/model.json" --workspace "$OUT/workspace/"
+# 退出码 2=结构/引用错误必须修；1=炼化阈值未达标（按纪律先别交付）；0=通过
+```
 
 ---
 
@@ -202,14 +202,15 @@ draft 出 `model.json` 后、渲染之前，**加一道独立核查闸**——�
 
 ## 阶段三：渲染单文件面板
 
-用**系统 python**（stdlib only）渲染：
+用**系统 python3**（stdlib only）渲染：
 
 ```bash
-/usr/bin/python3 "$SKILL_DIR/scripts/render_dashboard.py" "$OUT/model.json" "$OUT/dashboard.html" \
+python3 "$SKILL_DIR/scripts/render_dashboard.py" "$OUT/model.json" "$OUT/dashboard.html" \
   --workspace "$OUT/workspace/" --self-check
 ```
 
-- 输出是**单文件** `dashboard.html`，**离线可打开**：所有 CSS/JS 内联，所有图片读取后替换为 `data:` URI 内嵌；**仅 Chart.js 与 Mermaid 走 CDN**。
+- 渲染前**自动调用 `validate_model.py`**（结构/交叉引用/页码越界/炼化阈值），不过关直接退出码 2——先修 model.json，别用 `--skip-validate` 绕。
+- 输出是**单文件** `dashboard.html`，**完全自包含、零外链、断网可开**：CSS/JS 内联，图片替换为 `data:` URI 内嵌，**Chart.js 与 Mermaid 也整体内联**（体积约 +3.5MB，是"离线可用 > 体积小"的既定取舍；确需外链瘦身可加 `--cdn`，但断网时图与图表只剩降级显示）。
 - 图片 `src` 先按绝对路径找，找不到再按 `workspace/src` 找；缺图不报错，渲染占位并在 stderr 警告。
 - 退出码 0 = 成功；非 0 = 失败并在 stderr 说明。加了 `--self-check` 会渲染后自动调用 selfcheck（即可省略阶段四的手动调用）。
 - 默认 `--template` = `scripts/../templates/dashboard.html`，默认 `--workspace` = `model.json` 所在目录；上面显式写 `--workspace` 更稳。
@@ -221,10 +222,11 @@ draft 出 `model.json` 后、渲染之前，**加一道独立核查闸**——�
 若阶段三没带 `--self-check`，单独跑：
 
 ```bash
-/usr/bin/python3 "$SKILL_DIR/scripts/selfcheck.py" "$OUT/dashboard.html"   # 加 --json 输出机器可读报告
+python3 "$SKILL_DIR/scripts/selfcheck.py" "$OUT/dashboard.html"   # 加 --json 输出机器可读报告
 ```
 
 - playwright 无头加载，捕获 console error / pageerror，统计 Mermaid 渲染出的 svg 数与 Chart canvas 数，校验注入 JSON 可解析、关键 section 存在；有错误则退出码非 0。
+- 当前 python 缺 playwright 时，脚本会**自动切换到 skill `.venv` 的 python** 重跑（bootstrap 用 `--with-selfcheck` 装过即可用）。
 - 浏览器获取顺序：先 `chromium.launch()`，失败再 `channel="chrome"`，再失败降级为静态解析检查并 warn。
 
 **人工抽查**（自检脚本不能替代）：树节点引用的来源页码在 `meta.json` 里真实存在；要点里的数字与原文一致；去重没把不同概念误合并。
@@ -239,7 +241,7 @@ draft 出 `model.json` 后、渲染之前，**加一道独立核查闸**——�
 - **"待核实" 严格界定**：只用于「原文确实未写 / 来自 OCR / 多源冲突未定」；**不得**用于「本工具没抽出来」——后者必须回查原件补回真值。
 - **分批**：单文件 ~100 页以上或 `content.md` 超长时分批读取再汇总，避免遗漏后半部分。
 - **语言策略**：`meta.ui_lang`（界面 + AI 撰写文案）跟随**用户在阶段零选定的语言**；`meta.content_lang` 跟随文档主要语言；逐字 `quotes` 保留原文。
-- 禁用 localStorage；除 Chart.js / Mermaid 两个 CDN 外不得有其它外链或网络请求。
+- 禁用 localStorage；输出面板**零外链、零网络请求**（Chart.js / Mermaid 已内联；仅 `--cdn` 模式例外，且须明示用户断网后果）。
 - **界面风格固定为「纸本」皮肤**：暖米纸 + 蓝色强调（重点/风险保留朱红）+ 无衬线正文 + 数字高亮 + 松密度 + 日读，由 `templates/dashboard.html` 决定；AI 不改皮肤、不提供外观切换面板。
 
 ---
@@ -248,10 +250,12 @@ draft 出 `model.json` 后、渲染之前，**加一道独立核查闸**——�
 
 - `references/merge-and-structure.md` — 阶段二跨文件去重/冲突/互补/文件关系判定、三层阅读模型、逻辑图主角化、炼化体检与核查的操作指南。
 - `references/model-schema.md` — `model.json` 的人类可读说明与完整示例（含 Block 调色板、`highlights`、`metric`、`distillation_report` 用法）。
-- `schema/model.schema.json` — `model.json` 的 JSON Schema（draft-07），用于结构自检。
+- `schema/model.schema.json` — `model.json` 的 JSON Schema（draft-07）。
 - `scripts/scan_docs.py` — 阶段零：扫描目标文件夹列出候选文档（stdlib only，供与用户确认）。
-- `scripts/bootstrap.sh` — 用 uv 建 `.venv`（py3.11）并安装 markitdown + pymupdf。
-- `scripts/normalize.py` — 阶段一：单文件 → `workspace/<name>/{content.md, assets/, meta.json}`（含 PDF 表格结构化抽取与扫描件 OCR 回退）。
-- `scripts/render_dashboard.py` — 阶段三：`model.json (+workspace)` → 单文件 `dashboard.html`（stdlib only，图片 base64 内嵌）。
-- `scripts/selfcheck.py` — 阶段五：playwright 无头校验 `dashboard.html`（stdlib + playwright）。
-- `templates/dashboard.html` — 固定单文件前端模板（内联 CSS/JS + `__DASHBOARD_DATA__` JSON 注入位）。
+- `scripts/bootstrap.sh` — 建 `.venv` 并安装 markitdown + pymupdf（优先 uv，无 uv 回退 `python3 -m venv`；`--with-selfcheck` 顺带装 playwright + chromium）。
+- `scripts/normalize.py` — 阶段一：单文件 → `workspace/<name>/{content.md, assets/, meta.json}`（PDF 逐页页锚 + 表格结构化抽取 + 扫描件 OCR 回退；增量跳过）。
+- `scripts/validate_model.py` — 阶段二末尾 / 渲染前的机器校验闸：结构、交叉引用、页码越界、炼化阈值（stdlib only）。
+- `scripts/render_dashboard.py` — 阶段三：`model.json (+workspace)` → 单文件 `dashboard.html`（stdlib only，图片 base64 内嵌，Chart.js/Mermaid 内联）。
+- `scripts/selfcheck.py` — 阶段五：playwright 无头校验 `dashboard.html`（缺 playwright 自动切 `.venv` python，再不行降级静态检查）。
+- `templates/dashboard.html` — 固定单文件前端模板（内联 CSS/JS + `__DASHBOARD_DATA__` / `__VENDOR_JS__` 注入位）。
+- `templates/vendor/` — 内联用的 Chart.js / Mermaid 副本（版本与许可见其 README）。

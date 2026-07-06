@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test deps
+        run: pip install pytest
+
+      - name: Unit + integration tests
+        run: pytest tests/ -q
+
+      - name: Validate example model
+        run: python scripts/validate_model.py examples/example-model.json
+
+      - name: Render example dashboard (inline vendor)
+        run: |
+          python scripts/render_dashboard.py examples/example-model.json \
+            "${{ runner.temp }}/dashboard.html" --workspace examples/
+
+      - name: Selfcheck (static mode on CI)
+        run: python scripts/selfcheck.py "${{ runner.temp }}/dashboard.html" --json
+
+      - name: Bootstrap script syntax
+        run: bash -n scripts/bootstrap.sh

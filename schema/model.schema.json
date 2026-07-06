@@ -108,14 +108,58 @@
 
     "DistillationReport": {
       "type": "object",
-      "description": "炼化体检表。所有字段可选，给了就在面板「炼化体检」区展示。",
+      "description": "炼化体检表。数值字段供 validate_model.py 机器执行阈值纪律（coverage=100%、todo≤10%、claims=100%）；同名字符串字段是展示文案（面板优先显示文案，缺省由数值合成）。所有字段可选，给了就在面板「炼化体检」区展示。",
       "additionalProperties": false,
       "properties": {
         "source_words": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
-        "compression_ratio": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
-        "section_coverage": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
-        "claims_with_source": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
-        "todo_ratio": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "model_words": {
+          "description": "model 正文字数（用于 compression_ratio_x 的核算基准）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "compression_ratio_x": {
+          "description": "压缩倍数（数值），如 6.1 表示约 6.1:1。~3–10 为宜；<2 疑似搬运、>15 疑似漏收。",
+          "oneOf": [{ "type": "number" }, { "type": "null" }]
+        },
+        "compression_ratio": {
+          "description": "压缩比展示文案，如 \"约 6:1\"。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "sections_total": {
+          "description": "源文档章节总数（数值，机器校验用）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "sections_mapped": {
+          "description": "已映射到 outline 的源章节数；必须等于 sections_total（覆盖率 100%）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "section_coverage": {
+          "description": "章节覆盖展示文案，如 \"11/11 章已映射\"。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "claims_total": {
+          "description": "声明/数据点总数（数值）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "claims_with_source_count": {
+          "description": "带溯源的声明数；必须等于 claims_total（溯源率 100%）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "claims_with_source": {
+          "description": "溯源率展示文案，如 \"100%（0 条无源）\"。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "todo_count": {
+          "description": "「待核实」标注条数（数值）。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "data_points": {
+          "description": "数据点总数（todo 占比分母）。todo_count/data_points > 10% 不得交付。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
+        },
+        "todo_ratio": {
+          "description": "待核实占比展示文案，如 \"3 处待核实 / 约 60 数据点 ≈ 5%\"。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
         "derived_numbers": { "oneOf": [{ "type": "integer" }, { "type": "null" }] },
         "unmapped_source_blocks": {
           "type": "array",

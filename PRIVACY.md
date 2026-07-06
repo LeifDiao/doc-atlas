@@ -25,10 +25,10 @@ regulated documents**, the same as with any content you bring into an AI assista
 - **First use installs parsing dependencies** (markitdown + PyMuPDF, ~290 MB; optionally
   `ocrmypdf`) from PyPI, only after you consent, into an isolated `.venv` that is reused
   afterward. Decline and nothing is installed.
-- **The generated `dashboard.html` loads two libraries from a public CDN** (Chart.js and
-  Mermaid, via jsDelivr) when you open it with a network connection. Images are inlined as
-  base64, so the rest of the file is self-contained. Remove those two `<script>` tags (or
-  vendor the libraries locally) if you need a fully offline file.
+- **The generated `dashboard.html` makes no network requests by default.** Chart.js and
+  Mermaid are inlined into the file along with base64 images, so it opens fully offline with
+  nothing fetched. (An opt-in `--cdn` render mode loads those two libraries from jsDelivr
+  instead, trading the offline guarantee for a smaller file.)
 - doc-atlas uploads **no telemetry or analytics** of its own.
 
 ## Data Written

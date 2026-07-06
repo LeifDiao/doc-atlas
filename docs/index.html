@@ -74,8 +74,12 @@ body.zh .hero h1{font-weight:600;letter-spacing:-.5px;line-height:1.14}
 .cmd .pfx{color:var(--blue);font-weight:500}.cmd .cur{width:7px;height:15px;background:var(--blue);display:inline-block;animation:blink 1.1s step-end infinite;transform:translateY(2px)}
 @keyframes blink{50%{opacity:0}}
 
-/* dashboard preview */
-.preview{position:relative;background:var(--card);border:1px solid var(--line-2);padding:18px;box-shadow:var(--shadow)}
+/* dashboard preview（整块可点，直达真实样例面板） */
+a.preview-link{display:block;text-decoration:none;color:inherit}
+a.preview-link:hover .preview{border-color:var(--blue-line);box-shadow:0 1px 2px rgba(5,28,44,.06),0 22px 52px rgba(34,81,255,.12)}
+a.preview-link:hover .pv-open{color:var(--blue)}
+.pv-open{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--t4);text-transform:uppercase;transition:color .18s}
+.preview{position:relative;background:var(--card);border:1px solid var(--line-2);padding:18px;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .18s}
 .pv-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--t4);margin-bottom:15px;text-transform:uppercase;padding-bottom:13px;border-bottom:1px solid var(--line)}
 .pv-head b{color:var(--blue);font-weight:600}
 .pv-body{display:grid;grid-template-columns:90px 1fr;gap:16px}
@@ -190,9 +194,10 @@ footer a{color:var(--t3);font-weight:500}footer a:hover{color:var(--blue)}
       <div class="cmd"><span class="pfx">/doc-atlas</span><span class="t-en">make sense of these reports</span><span class="t-zh">帮我把这些文档梳成一张面板</span><span class="cur"></span></div>
     </div>
 
-    <!-- PREVIEW -->
+    <!-- PREVIEW（点击直达真实样例面板） -->
+    <a class="preview-link" href="./sample-dashboard.html">
     <div class="preview">
-      <div class="pv-head"><span><span class="t-en">DASHBOARD</span><span class="t-zh">面板</span></span><span><b>2</b> <span class="t-en">files</span><span class="t-zh">文件</span> · <b>47</b> <span class="t-en">pages</span><span class="t-zh">页</span></span></div>
+      <div class="pv-head"><span><span class="t-en">DASHBOARD</span><span class="t-zh">面板</span></span><span class="pv-open"><span class="t-en">open the real sample ↗</span><span class="t-zh">点击打开真实样例 ↗</span></span></div>
       <div class="pv-body">
         <div class="pv-toc">
           <div class="a">1 <span class="t-en">Business</span><span class="t-zh">业务表现</span></div>
@@ -216,6 +221,7 @@ footer a{color:var(--t3);font-weight:500}footer a:hover{color:var(--blue)}
         </div>
       </div>
     </div>
+    </a>
   </header>
 
   <!-- FEATURES -->

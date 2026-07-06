@@ -10,8 +10,10 @@ selfcheck.py —— doc-atlas 阶段四自检脚本。
     给出结构化自检报告。
 
 运行环境：
-    必须用系统 python（playwright 已可 import）：
-        /usr/bin/python3 scripts/selfcheck.py DASHBOARD_HTML [--json]
+    任意 python3 皆可启动：
+        python3 scripts/selfcheck.py DASHBOARD_HTML [--json]
+    当前解释器缺 playwright 时，会自动切换到 skill 同级 .venv 的 python 重新执行
+    （bootstrap.sh --with-selfcheck 装过即可用）；两边都没有则降级静态模式。
 
 用法（CLI 契约）：
     python3 selfcheck.py DASHBOARD_HTML [--json]
@@ -34,6 +36,33 @@ import os
 import re
 import json
 import argparse
+
+
+def _maybe_reexec_with_venv():
+    """
+    当前解释器缺 playwright 时，尝试切换到 skill 同级 .venv 的 python 重新执行本脚本
+    （新用户系统 python 通常没装 playwright，这一步让浏览器自检"能用就用"）。
+    环境变量 DOC_ATLAS_SELFCHECK_REEXEC 防止无限循环；venv 也没有则留在原地降级静态。
+    """
+    if os.environ.get("DOC_ATLAS_SELFCHECK_REEXEC"):
+        return
+    try:
+        import playwright  # noqa: F401
+        return  # 当前解释器可用，无需切换
+    except ImportError:
+        pass
+    venv_py = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           ".venv", "bin", "python")
+    if not os.path.exists(venv_py) or os.path.realpath(venv_py) == os.path.realpath(sys.executable):
+        return
+    import subprocess
+    probe = subprocess.run([venv_py, "-c", "import playwright"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if probe.returncode != 0:
+        return
+    os.environ["DOC_ATLAS_SELFCHECK_REEXEC"] = "1"
+    print(f"[selfcheck] 当前 python 缺 playwright，切换到 venv：{venv_py}", file=sys.stderr)
+    os.execv(venv_py, [venv_py, os.path.abspath(__file__)] + sys.argv[1:])
 
 
 # ── 浏览器内执行的取数/统计脚本（在 page.evaluate 里跑）─────────────────────────
@@ -255,16 +284,15 @@ def _run_static_check(html_path, report):
     else:
         report["notes"].append("静态：未检测到 section / dashboard 容器（结构可疑）。")
 
-    # 3) Chart.js / Mermaid 的 CDN 引用是否存在（spec 允许的唯一外链）。
-    if re.search(r'chart\.js|chart\.umd|cdn[^"\']*chart', html, re.IGNORECASE):
-        report["notes"].append("静态：检测到 Chart.js CDN 引用。")
+    # 3) 前端库注入方式：内联 vendor（缺省，零外链）或 CDN 外链（--cdn）。
+    if re.search(r'doc-atlas:vendor inline', html):
+        report["notes"].append("静态：检测到内联 vendor（Chart.js/Mermaid 已内嵌，零外链）。")
+    elif re.search(r'doc-atlas:vendor cdn', html) or \
+            re.search(r'cdn[^"\']*(chart|mermaid)', html, re.IGNORECASE):
+        report["notes"].append("静态：检测到 CDN 外链模式（--cdn），断网打开时图与图表只有降级显示。")
     else:
-        report["notes"].append("静态：未检测到 Chart.js CDN 引用。")
-
-    if re.search(r'mermaid', html, re.IGNORECASE):
-        report["notes"].append("静态：检测到 Mermaid CDN/脚本引用。")
-    else:
-        report["notes"].append("静态：未检测到 Mermaid CDN/脚本引用。")
+        report["notes"].append("静态：未检测到 Chart.js/Mermaid 注入（结构可疑）。")
+        report["ok"] = False
 
 
 def _finalize_ok(report):
@@ -316,6 +344,7 @@ def _print_human(report):
 
 
 def main(argv=None):
+    _maybe_reexec_with_venv()
     parser = argparse.ArgumentParser(
         description="阶段四自检：playwright 无头校验 dashboard.html。"
     )

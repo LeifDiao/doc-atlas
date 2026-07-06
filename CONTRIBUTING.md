@@ -7,7 +7,7 @@ Contributions are welcome.
 doc-atlas is a Claude Code skill with a deterministic rendering core:
 
 ```
-scan_docs.py → normalize.py → (AI writes model.json) → render_dashboard.py → selfcheck.py
+scan_docs.py → normalize.py → (AI writes model.json) → validate_model.py → render_dashboard.py → selfcheck.py
 ```
 
 The **hard boundary**: the AI produces a structured `model.json`; the renderer turns it into
@@ -18,34 +18,41 @@ intact — it is what makes output stable, headless-checkable, and token-efficie
 
 - **Rendering / layout** → `scripts/render_dashboard.py` + `templates/dashboard.html`.
 - **Data shape** → `schema/model.schema.json` (draft-07). When you change it, update the
-  human docs in `references/model-schema.md` and `references/merge-and-structure.md` to
-  match, and keep `examples/example-model.json` valid.
+  matching validator in `scripts/validate_model.py`, the human docs in
+  `references/model-schema.md` and `references/merge-and-structure.md`, and keep
+  `examples/example-model.json` valid.
 - **Normalization / scanning** → `scripts/normalize.py`, `scripts/scan_docs.py`.
+- **Bundled libraries** → `templates/vendor/` (Chart.js / Mermaid, inlined into every
+  dashboard). See `templates/vendor/README.md` for how to upgrade.
 - **Workflow / behavior** → `SKILL.md` (the skill entry point) and `references/`.
 
 ## Development checks
 
-The scripts are plain Python 3. `render_dashboard.py` and `selfcheck.py` use only the
-standard library plus Playwright (for the self-check); normalization uses markitdown +
-PyMuPDF, installed on first use into an isolated `.venv`.
+`validate_model.py`, `render_dashboard.py`, and `selfcheck.py` are plain Python 3 with only
+the standard library (selfcheck additionally uses Playwright when available); normalization
+uses markitdown + PyMuPDF, installed on first use into an isolated `.venv`.
 
 ```bash
-# Syntax-check the scripts
-python3 -m py_compile scripts/scan_docs.py scripts/normalize.py \
-  scripts/render_dashboard.py scripts/selfcheck.py
+# Unit + integration tests
+pip install pytest && pytest tests/ -q
 
-# Render the bundled example model into a dashboard (positional: model.json, out.html)
-python3 scripts/render_dashboard.py examples/example-model.json /tmp/example.html
+# Validate a model.json (structure / cross-refs / page bounds / distillation thresholds)
+python3 scripts/validate_model.py examples/example-model.json
 
-# Headless self-check (needs playwright + a Chromium/Chrome)
+# Render the bundled example (validation runs automatically before rendering)
+python3 scripts/render_dashboard.py examples/example-model.json /tmp/example.html \
+  --workspace examples/
+
+# Headless self-check (uses Playwright; auto-switches to the .venv python if needed)
 python3 scripts/selfcheck.py /tmp/example.html
 
-# Or render and self-check in one step
-python3 scripts/render_dashboard.py examples/example-model.json /tmp/example.html --self-check
+# Regenerate both sample dashboards from one render (prevents drift)
+bash scripts/build_examples.sh
 ```
 
-Validate a `model.json` against the schema before rendering (any draft-07 validator works),
-and confirm the example still renders without console errors after a change.
+`render_dashboard.py` runs `validate_model.py` automatically and refuses to render an invalid
+model. After any change to the schema, renderer, or template, run `pytest`, regenerate the
+examples, and confirm the dashboard still renders without console errors.
 
 ## Design principles
 
@@ -57,8 +64,10 @@ and confirm the example still renders without console errors after a change.
   from the user's documents and are untrusted. The template escapes content via `esc()` and
   the data is embedded through `_serialize_and_escape()`; never interpolate source text into
   the DOM or the `<script>` payload without going through them.
-- **Self-contained output.** Images are inlined as base64; only Chart.js / Mermaid load from
-  a CDN. Don't add new runtime CDNs or trackers to the template.
+- **Self-contained output.** Images are inlined as base64, and Chart.js / Mermaid are
+  inlined from `templates/vendor/` — the default dashboard makes **zero network requests**.
+  Don't add new runtime CDNs or trackers to the template; keep the `--cdn` path as an
+  explicit opt-out only.
 - **Keep heavy deps optional and isolated.** markitdown / PyMuPDF / OCR install only with the
   user's consent, into a reused `.venv`. Don't add outbound network calls to the scripts.
 - **Render only when there is data.** Right-side modules appear only if the corresponding

@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 doc-atlas-out/
 .DS_Store
+Icon?
+.pytest_cache/

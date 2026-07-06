@@ -6,9 +6,14 @@ normalize.py —— 阶段一：单个文档归一化为 Markdown 中间层。
 把任意支持的格式（pdf/docx/pptx/xlsx/html/epub/md/...）转成统一的
 Markdown，并在工作区产出「三件套」：
     WORKSPACE/<安全文件名>/
-        ├── content.md     完整 Markdown 正文（不截断）；PDF 表格按行×列结构化抽取后追加在文末
+        ├── content.md     完整 Markdown 正文（不截断）。PDF 走 fitz 逐页文本并在每页前
+        │                  插入页锚 `<!-- [doc-atlas] p.N -->`（SourceRef.page 的直接依据）；
+        │                  表格另按行×列结构化抽取后追加在文末
         ├── assets/        仅 PDF：抽取的有信息量图片（p<page>-img<n>.png）
-        └── meta.json      文件元信息 + 标题→页码映射 + 资源清单 + 表格登记(tables/table_extraction)
+        └── meta.json      文件元信息 + page_map 页码映射 + 标题索引 + 资源清单
+                           + 表格登记(tables/table_extraction) + date_source/content_source
+
+增量：源文件 mtime+size 未变且产物齐全时自动跳过（--force 强制重跑）。
 
 依赖：
     - 标准库
@@ -40,8 +45,16 @@ MIN_IMG_HEIGHT = 80         # 像素
 MIN_IMG_AREA = 100 * 100    # 像素面积下限
 MIN_IMG_BYTES = 3 * 1024    # 解码后字节下限（再排掉纯色/极小图）
 
-# 扫描版判定：去掉空白后正文字符少于该阈值且是 pdf → 视作扫描版
+# 扫描版判定（fitz 不可用时的兜底）：去掉空白后正文字符少于该阈值且是 pdf → 视作扫描版
 SCANNED_TEXT_THRESHOLD = 100
+
+# 扫描版判定（主路径，逐页）：单页可见字符 ≥ 该值视为"有文本层"；
+# 有文本层的页占比 < SCANNED_PAGE_RATIO 才判为扫描版（避免短文档被绝对阈值误判）
+MIN_PAGE_TEXT_CHARS = 25
+SCANNED_PAGE_RATIO = 0.5
+
+# PDF 页锚：插入 content.md 的页码标记，是 SourceRef.page 的直接依据
+PAGE_ANCHOR_FMT = "<!-- [doc-atlas] p.{page} -->"
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -99,10 +112,11 @@ def visible_char_count(text):
 
 def guess_date(text, src_path):
     """
-    启发式推断文档日期：
-      1) 先看文件系统 mtime（兜底）；
-      2) 在正文前若干字符里找形如 2023-01-02 / 2023年1月2日 / 2023/1/2 的日期，优先采用。
-    返回 ISO 日期字符串（YYYY-MM-DD）或 None。
+    启发式推断文档日期。返回 (ISO 日期字符串 | None, 来源标记)。
+      - 优先在正文前若干字符里找形如 2023-01-02 / 2023年1月2日 / 2023/1/2 的日期 → 来源 "content"；
+      - 找不到则兜底文件系统 mtime → 来源 "mtime"。
+    注意：mtime 对"下载来的文件"是下载日期，不可靠——阶段二做"新版优先"
+    权威性裁决时，date_source=="mtime" 的日期不得作为依据（见 merge-and-structure.md §2）。
     """
     candidate = None
     head = (text or "")[:4000]
@@ -126,14 +140,14 @@ def guess_date(text, src_path):
                 continue
 
     if candidate:
-        return candidate
+        return candidate, "content"
 
-    # 兜底：文件 mtime
+    # 兜底：文件 mtime（不可作权威性依据）
     try:
         ts = os.path.getmtime(src_path)
-        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d"), "mtime"
     except OSError:
-        return None
+        return None, None
 
 
 def parse_headings(md_text):
@@ -327,6 +341,74 @@ def pdf_locate_heading_pages(fitz, pdf_path, headings):
 
 
 # ════════════════════════════════════════════════════════════════════
+# PDF 专属：逐页文本 + 页锚（SourceRef.page 可溯源的机器依据）
+# ════════════════════════════════════════════════════════════════════
+def pdf_page_texts(fitz, pdf_path):
+    """
+    用 fitz 逐页取文本。返回 [str, ...]（每页一项）；打开失败返回 None。
+    单页失败置空串，不中断整体。
+    """
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception as e:  # noqa: BLE001
+        eprint(f"[normalize] 提示：打开 PDF 逐页取文本失败（{e}）。")
+        return None
+    texts = []
+    try:
+        for i in range(doc.page_count):
+            try:
+                texts.append(doc.load_page(i).get_text("text") or "")
+            except Exception:  # noqa: BLE001
+                texts.append("")
+    finally:
+        try:
+            doc.close()
+        except Exception:  # noqa: BLE001
+            pass
+    return texts
+
+
+def text_page_ratio(page_texts):
+    """有文本层的页占比（单页可见字符 ≥ MIN_PAGE_TEXT_CHARS 计为有字）。"""
+    if not page_texts:
+        return 0.0
+    with_text = sum(1 for t in page_texts
+                    if visible_char_count(t) >= MIN_PAGE_TEXT_CHARS)
+    return with_text / len(page_texts)
+
+
+def build_anchored_markdown(page_texts):
+    """
+    把逐页文本拼成带页锚的 content.md 正文。
+    返回 (md_text, page_map)：
+      - md_text：每页正文前插入一行 `<!-- [doc-atlas] p.N -->` 页锚，
+        阶段二写 SourceRef.page 时直接读锚，不再靠猜或回读原件；
+      - page_map：[{page, char_start, first_line}]，char_start 为该页锚在
+        md_text 中的字符偏移，first_line 为该页首个非空行（截 80 字符），
+        登记进 meta.json 供程序侧核查。
+    无文本层的页写占位说明（提示 AI 看 assets/ 原图）。
+    """
+    parts = []
+    page_map = []
+    offset = 0
+    for i, t in enumerate(page_texts):
+        page_no = i + 1
+        body = (t or "").strip()
+        first_line = ""
+        for ln in body.splitlines():
+            if ln.strip():
+                first_line = ln.strip()[:80]
+                break
+        if not body:
+            body = "（本页无文本层：可能是纯图页，见 assets/ 抽取的原图）"
+        chunk = PAGE_ANCHOR_FMT.format(page=page_no) + "\n\n" + body + "\n\n"
+        page_map.append({"page": page_no, "char_start": offset, "first_line": first_line})
+        parts.append(chunk)
+        offset += len(chunk)
+    return "".join(parts), page_map
+
+
+# ════════════════════════════════════════════════════════════════════
 # PDF 专属：表格结构化抽取（保数值列）
 # ════════════════════════════════════════════════════════════════════
 def _table_rows_to_md(rows):
@@ -462,7 +544,10 @@ def main():
     parser.add_argument("input", help="输入文件路径")
     parser.add_argument("--out", required=True, help="工作区根目录（WORKSPACE_DIR）")
     parser.add_argument("--file-id", default=None,
-                        help="该文件的稳定 id（如 f1）；缺省用安全文件名")
+                        help="该文件的稳定 id（如 f1）；缺省用安全文件名。"
+                             "model.json 的 files[].id 必须与此一致，供 validate_model.py 交叉核查")
+    parser.add_argument("--force", action="store_true",
+                        help="强制重新归一化（缺省：源文件 mtime/size 未变时跳过复用已有产物）")
     args = parser.parse_args()
 
     in_path = os.path.abspath(args.input)
@@ -477,101 +562,162 @@ def main():
     out_root = os.path.abspath(args.out)
     doc_dir = os.path.join(out_root, name_dir)
     assets_dir = os.path.join(doc_dir, "assets")
-    os.makedirs(assets_dir, exist_ok=True)
 
     content_path = os.path.join(doc_dir, "content.md")
     meta_path = os.path.join(doc_dir, "meta.json")
 
+    # ── 0) 增量跳过：源文件未变（mtime+size）且产物齐全 → 直接复用 ──
+    try:
+        src_stat = os.stat(in_path)
+        src_mtime, src_size = int(src_stat.st_mtime), src_stat.st_size
+    except OSError:
+        src_mtime, src_size = None, None
+    if (not args.force and src_mtime is not None
+            and os.path.isfile(meta_path) and os.path.isfile(content_path)):
+        try:
+            with open(meta_path, "r", encoding="utf-8") as f:
+                old_meta = json.load(f)
+            if (old_meta.get("source_mtime") == src_mtime
+                    and old_meta.get("source_size") == src_size):
+                eprint(f"[normalize] 跳过（源未变，复用已有产物；--force 可强制重跑）：{doc_dir}")
+                print(doc_dir)
+                return
+        except Exception:  # noqa: BLE001 —— 旧 meta 读不出就正常重跑
+            pass
+
+    os.makedirs(assets_dir, exist_ok=True)
     eprint(f"[normalize] 处理：{in_path}  (type={file_type}, id={file_id})")
 
-    # ── 1) markitdown 转换 ──
+    # ── 1) markitdown 转换（非 PDF 的主路径；PDF 的兜底路径）──
     md_text = convert_with_markitdown(in_path)
 
     scanned = False
     ocr_tmp = None
     is_pdf = (file_type == "pdf")
+    fitz = _try_import_fitz() if is_pdf else None
 
-    # ── 2) 扫描版 PDF 判定 + OCR 回退 ──
-    if is_pdf and visible_char_count(md_text) < SCANNED_TEXT_THRESHOLD:
-        eprint("[normalize] 检测到 PDF 正文极少，疑为扫描版，尝试 OCR 回退…")
+    # ── 2) 扫描版 PDF 判定（逐页占比，短文档不再被绝对阈值误判）+ OCR 回退 ──
+    page_texts = None
+    tp_ratio = None
+    if is_pdf and fitz is not None:
+        page_texts = pdf_page_texts(fitz, in_path)
+    if page_texts is not None:
+        tp_ratio = text_page_ratio(page_texts)
+        scanned_suspect = tp_ratio < SCANNED_PAGE_RATIO
+    else:
+        # fitz 不可用时的兜底：全文绝对阈值
+        scanned_suspect = is_pdf and visible_char_count(md_text) < SCANNED_TEXT_THRESHOLD
+
+    if is_pdf and scanned_suspect:
+        eprint("[normalize] 检测到 PDF 文本层不足"
+               + (f"（有字页占比 {tp_ratio:.0%}）" if tp_ratio is not None else "")
+               + "，疑为扫描版，尝试 OCR 回退…")
         ocr_tmp = ocr_pdf_if_possible(in_path)
         if ocr_tmp:
             eprint("[normalize] ocrmypdf 完成，重新转换 OCR 后的 PDF。")
             md_text = convert_with_markitdown(ocr_tmp)
-            # OCR 后若仍极少，也标记 scanned 以示警
-            scanned = visible_char_count(md_text) < SCANNED_TEXT_THRESHOLD
+            if fitz is not None:
+                page_texts = pdf_page_texts(fitz, ocr_tmp)
+                tp_ratio = text_page_ratio(page_texts) if page_texts is not None else None
+            # OCR 后若仍不足，标记 scanned 以示警
+            scanned = (tp_ratio < SCANNED_PAGE_RATIO) if tp_ratio is not None \
+                else (visible_char_count(md_text) < SCANNED_TEXT_THRESHOLD)
         else:
             scanned = True
             eprint("[normalize] 未找到 ocrmypdf（或 OCR 失败）。建议：brew install ocrmypdf。"
-                   "本文件按扫描版处理，正文可能为空。")
+                   "本文件按扫描版处理，正文可能不完整。")
 
-    # ── 3) 写 content.md（分块写，确保超长不截断）──
-    with open(content_path, "w", encoding="utf-8", newline="\n") as f:
-        chunk = 1 << 20  # 1MB
-        for i in range(0, len(md_text), chunk):
-            f.write(md_text[i:i + chunk])
-
-    # ── 4) 标题索引 ──
-    headings = parse_headings(md_text)
-
-    # ── 5) PDF 专属：抽图 + 标题页码定位（fitz 缺失则安全降级）──
-    assets = []
-    # 抽图/定位都基于「实际被转换的 pdf」：扫描版若 OCR 成功用 OCR 版，否则用原版
+    # 抽图/定位/抽表都基于「实际被转换的 pdf」：扫描版若 OCR 成功用 OCR 版，否则用原版
     pdf_for_fitz = ocr_tmp if (is_pdf and ocr_tmp) else (in_path if is_pdf else None)
 
+    # ── 3) 选定正文：PDF 优先 fitz 逐页文本 + 页锚（SourceRef.page 的机器依据）──
+    page_map = []
+    content_source = "markitdown"
+    if is_pdf and page_texts:
+        paged_visible = sum(visible_char_count(t) for t in page_texts)
+        md_visible = visible_char_count(md_text)
+        # fitz 文本量不显著低于 markitdown（≥50%）就用带页锚的逐页文本；
+        # 否则说明 fitz 抽取异常，退回 markitdown（无页锚，meta 里注明）
+        if md_visible == 0 or paged_visible >= 0.5 * md_visible:
+            content_md, page_map = build_anchored_markdown(page_texts)
+            content_source = "pymupdf-paged"
+        else:
+            eprint(f"[normalize] 提示：fitz 逐页文本量偏低（{paged_visible} vs markitdown {md_visible}），"
+                   "退回 markitdown 输出（本文件无页锚）。")
+            content_md = md_text
+    else:
+        content_md = md_text
+
+    # ── 4) 写 content.md（分块写，确保超长不截断）──
+    with open(content_path, "w", encoding="utf-8", newline="\n") as f:
+        chunk = 1 << 20  # 1MB
+        for i in range(0, len(content_md), chunk):
+            f.write(content_md[i:i + chunk])
+
+    # ── 5) 标题索引（PDF 逐页文本无 # 标题属正常：页锚已承担页码溯源）──
+    headings = parse_headings(content_md)
+
+    # ── 6) PDF 专属：抽图 + 标题页码定位 + 表格结构化抽取（fitz 缺失则安全降级）──
+    assets = []
     tables_meta = []
     table_status = None       # "ok" | "low" | "none" | None(非 PDF / fitz 不可用)
-    if is_pdf:
-        fitz = _try_import_fitz()
-        if fitz is not None and pdf_for_fitz:
-            assets = pdf_extract_assets(fitz, pdf_for_fitz, assets_dir)
+    if is_pdf and fitz is not None and pdf_for_fitz:
+        assets = pdf_extract_assets(fitz, pdf_for_fitz, assets_dir)
+        if headings:
             headings = pdf_locate_heading_pages(fitz, pdf_for_fitz, headings)
-            # 表格结构化抽取 → 追加进 content.md，并登记到 meta
-            tables_meta, appendix_md, table_status = pdf_extract_tables(fitz, pdf_for_fitz)
-            if appendix_md:
-                try:
-                    with open(content_path, "a", encoding="utf-8", newline="\n") as f:
-                        f.write(appendix_md)
-                    eprint(f"[normalize] 表格结构化抽取：{len(tables_meta)} 张（status={table_status}），已追加进 content.md。")
-                except OSError as e:
-                    eprint(f"[normalize] 提示：追加表格到 content.md 失败（{e}）。")
-        else:
-            # fitz 不可用：标题页码全部置 None，照常产出
-            headings = [dict(h, page=None) for h in headings]
+        # 表格结构化抽取 → 追加进 content.md，并登记到 meta
+        tables_meta, appendix_md, table_status = pdf_extract_tables(fitz, pdf_for_fitz)
+        if appendix_md:
+            try:
+                with open(content_path, "a", encoding="utf-8", newline="\n") as f:
+                    f.write(appendix_md)
+                eprint(f"[normalize] 表格结构化抽取：{len(tables_meta)} 张（status={table_status}），已追加进 content.md。")
+            except OSError as e:
+                eprint(f"[normalize] 提示：追加表格到 content.md 失败（{e}）。")
     else:
-        # 非 PDF：没有可靠页码概念，page 一律 None
+        # 非 PDF / fitz 不可用：没有可靠页码概念，page 一律 None
         headings = [dict(h, page=None) for h in headings]
 
-    # ── 6) 页数统计（PDF 用 fitz/已抽过的页文本；非 PDF 为 None）──
+    # ── 7) 页数统计 ──
     pages = None
-    if is_pdf and pdf_for_fitz:
-        fitz2 = _try_import_fitz()
-        if fitz2 is not None:
-            try:
-                d = fitz2.open(pdf_for_fitz)
-                pages = d.page_count
-                d.close()
-            except Exception:  # noqa: BLE001
-                pages = None
+    if page_texts is not None:
+        pages = len(page_texts)
+    elif is_pdf and fitz is not None and pdf_for_fitz:
+        try:
+            d = fitz.open(pdf_for_fitz)
+            pages = d.page_count
+            d.close()
+        except Exception:  # noqa: BLE001
+            pages = None
 
-    # ── 7) 组装并写 meta.json ──
+    # ── 8) 组装并写 meta.json ──
+    words_basis = "\n".join(page_texts) if (content_source == "pymupdf-paged" and page_texts) \
+        else content_md
+    date_val, date_source = guess_date(content_md, in_path)
     meta = {
         "file_id": file_id,
         "file_name": os.path.basename(in_path),
         "file_type": file_type,
         "pages": pages,
-        "words": count_words(md_text),
-        "date": guess_date(md_text, in_path),
+        "words": count_words(words_basis),
+        "date": date_val,
+        "date_source": date_source,       # "content"（正文解析，可信）| "mtime"（兜底，不作权威性依据）
         "scanned": bool(scanned),
-        "assets": assets,                # [{path, page}]
-        "heading_index": headings,       # [{level, title, page|None}]
-        "tables": tables_meta,           # [{page, rows, cols, confidence}]（PDF 结构化抽表登记）
+        "text_page_ratio": (round(tp_ratio, 3) if tp_ratio is not None else None),
+        "content_source": content_source,  # "pymupdf-paged"（带页锚）| "markitdown"
+        "page_anchors": bool(page_map),    # true = content.md 内含 <!-- [doc-atlas] p.N --> 页锚
+        "page_map": page_map,              # [{page, char_start, first_line}]
+        "assets": assets,                  # [{path, page}]
+        "heading_index": headings,         # [{level, title, page|None}]
+        "tables": tables_meta,             # [{page, rows, cols, confidence}]（PDF 结构化抽表登记）
         "table_extraction": table_status,  # ok|low|none|None —— low/none 提示阶段二回查原件
+        "source_mtime": src_mtime,         # 增量跳过依据
+        "source_size": src_size,
     }
     with open(meta_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
 
-    # ── 8) 清理 OCR 临时文件 ──
+    # ── 9) 清理 OCR 临时文件 ──
     if ocr_tmp and os.path.exists(ocr_tmp):
         try:
             os.remove(ocr_tmp)
@@ -581,7 +727,8 @@ def main():
     # ── 完成提示 ──
     eprint(
         f"[normalize] 完成 → {doc_dir}\n"
-        f"            content.md ({len(md_text)} chars, {meta['words']} words), "
+        f"            content.md ({len(content_md)} chars, {meta['words']} words, "
+        f"source={content_source}, anchors={len(page_map)}), "
         f"assets={len(assets)}, headings={len(headings)}, "
         f"pages={pages}, scanned={scanned}"
     )

@@ -8,7 +8,7 @@ render_dashboard.py — 阶段三渲染器：model.json (+workspace) → 单文�
 这是预期取舍（离线可用 > 体积小）。
 
 纯标准库实现（json / base64 / mimetypes / argparse / pathlib / html / re / sys / os / datetime /
-subprocess）。运行在 /usr/bin/python3 (系统 Python 3.9) 即可。
+subprocess / shutil）。任意系统 python3 即可运行。
 
 用法：
     python3 render_dashboard.py MODEL_JSON OUT_HTML [--workspace DIR] [--template PATH] [--self-check]
@@ -19,8 +19,10 @@ subprocess）。运行在 /usr/bin/python3 (系统 Python 3.9) 即可。
     --workspace DIR   workspace 根目录，用于定位 block.image.src 等相对图片路径。
                       缺省 = MODEL_JSON 所在目录。
     --template PATH   前端模板路径。缺省 = 本脚本同级 ../templates/dashboard.html。
-    --self-check      渲染成功后用 /usr/bin/python3 调用同级 selfcheck.py 校验 OUT_HTML，
-                      并把其退出码并入本进程退出码。
+    --self-check      渲染成功后调用同级 selfcheck.py 校验 OUT_HTML（selfcheck 缺 playwright
+                      时会自动切到 .venv），并把其退出码并入本进程退出码。
+    --cdn             不内联 Chart.js/Mermaid，改用 CDN 外链（输出依赖网络；缺省内联、断网可开）。
+    --skip-validate   跳过渲染前的 validate_model.py 校验（不建议）。
 
 退出码语义：
     0   渲染成功（且 --self-check 时自检也通过）。
@@ -54,6 +56,22 @@ from pathlib import Path
 # 模板里唯一的数据注入 token
 DATA_TOKEN = "__DASHBOARD_DATA__"
 
+# 模板里唯一的前端库注入 token（整行 HTML 注释，渲染时被替换为内联脚本或 CDN 标签）
+VENDOR_TOKEN = "<!-- __VENDOR_JS__ -->"
+
+# vendor 库清单：templates/vendor/ 下的文件名 + 版本（升级时同步 vendor/README.md）
+VENDOR_LIBS = [
+    ("chart.umd.min.js", "chart.js@4.4.1"),
+    ("mermaid.min.js", "mermaid@10.9.1"),
+]
+
+# --cdn 时使用的外链（旧行为；输出将依赖网络才能渲染图与图表）
+VENDOR_CDN_TAGS = (
+    '<!-- doc-atlas:vendor cdn -->\n'
+    '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>\n'
+    '<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>'
+)
+
 # 顶层必须存在的字段（致命缺字段拦截，完整校验交给 schema/）
 REQUIRED_TOP_KEYS = ("meta", "files", "outline", "chapters")
 
@@ -65,6 +83,10 @@ IMAGE_EXTS = {
 
 # mimetypes 猜不出时的默认 MIME（按契约默认 image/png）
 DEFAULT_IMAGE_MIME = "image/png"
+
+# 通用兜底扫描只在这些字段名下做图片内嵌（防止把 md/text 里"恰好以 .png 结尾"的
+# 普通文本误替换成 dataURI）
+GENERIC_IMAGE_KEYS = {"src", "image", "img", "icon", "logo", "cover", "images"}
 
 
 # ----------------------------------------------------------------- 工具函数 --
@@ -169,28 +191,29 @@ class _ImageEmbedder:
         if isinstance(src, str) and src and not src.strip().lower().startswith("data:"):
             block["src"] = self._embed_one(src)
 
-    # -- 通用兜底：递归扫描任意 dict/list，碰到"看起来像本地图片路径"的字符串值就替换 --
-    def _process_generic(self, node):
+    # -- 通用兜底：递归扫描任意 dict/list，仅在图片字段名白名单下替换 --
+    def _process_generic(self, node, key=None):
         """
-        递归处理任意结构。对 dict 的每个 string 值、list 的每个 string 元素，
-        若 _looks_like_local_image 命中则替换为 dataURI。
-        image block 已在 walk() 里被专门处理过，这里主要兜底其它可能的本地图片字段
-        （例如某些自定义路径），不会破坏 data:/http 链接。
+        递归处理任意结构。仅当字段名落在 GENERIC_IMAGE_KEYS（src/image/…）里、
+        且字符串"看起来像本地图片路径"时才替换为 dataURI——普通文本字段
+        （md/text/caption…）即使恰好以 .png 结尾也不动，避免误伤正文。
+        list 沿用父字段名判断（如 images: ["a.png", "b.png"]）。
+        image block 已在 walk() 里被专门处理过，这里兜底其它可能的图片字段。
         """
         if isinstance(node, dict):
             for k, v in list(node.items()):
                 if isinstance(v, str):
-                    if _looks_like_local_image(v):
+                    if k in GENERIC_IMAGE_KEYS and _looks_like_local_image(v):
                         node[k] = self._embed_one(v)
                 elif isinstance(v, (dict, list)):
-                    self._process_generic(v)
+                    self._process_generic(v, k)
         elif isinstance(node, list):
             for i, v in enumerate(node):
                 if isinstance(v, str):
-                    if _looks_like_local_image(v):
+                    if key in GENERIC_IMAGE_KEYS and _looks_like_local_image(v):
                         node[i] = self._embed_one(v)
                 elif isinstance(v, (dict, list)):
-                    self._process_generic(v)
+                    self._process_generic(v, key)
 
     def walk(self, model):
         """
@@ -259,7 +282,7 @@ def _fill_generated_at(model):
 
 
 def _load_template(template_path):
-    """读模板并校验注入位恰好出现一次。失败以退出码 2 退出。"""
+    """读模板并校验两个注入位各恰好出现一次。失败以退出码 2 退出。"""
     p = Path(template_path)
     if not p.is_file():
         _eprint("[error] 模板不存在：%s" % template_path)
@@ -269,12 +292,44 @@ def _load_template(template_path):
     except Exception as exc:
         _eprint("[error] 读取模板失败：%s" % exc)
         sys.exit(2)
-    n = tpl.count(DATA_TOKEN)
-    if n != 1:
-        _eprint("[error] 模板中注入位 %s 必须恰好出现 1 次，实际出现 %d 次：%s"
-                % (DATA_TOKEN, n, template_path))
-        sys.exit(2)
+    for token in (DATA_TOKEN, VENDOR_TOKEN):
+        n = tpl.count(token)
+        if n != 1:
+            _eprint("[error] 模板中注入位 %s 必须恰好出现 1 次，实际出现 %d 次：%s"
+                    % (token, n, template_path))
+            sys.exit(2)
     return tpl
+
+
+def _build_vendor_html(template_path, use_cdn):
+    """
+    组装前端库注入内容：
+      - 默认：读取 templates/vendor/ 下的 Chart.js 与 Mermaid，整体内联为 <script>，
+        输出零外链、断网可开（体积换离线，是本项目的既定取舍）。
+      - --cdn 或 vendor 文件缺失：退回 CDN <script src> 标签（缺失时打警告）。
+    内联时把 `</script` 防御性转义为 `<\\/script`（两库实测不含该串，纯保险；
+    该转义仅可能落在 JS 字符串/正则里，语义等价）。
+    """
+    if use_cdn:
+        return VENDOR_CDN_TAGS
+    vendor_dir = Path(template_path).resolve().parent / "vendor"
+    parts = []
+    names = []
+    for fname, label in VENDOR_LIBS:
+        fp = vendor_dir / fname
+        if not fp.is_file():
+            _eprint("[warn] vendor 库缺失：%s —— 本次退回 CDN 外链（输出将依赖网络）。" % fp)
+            return VENDOR_CDN_TAGS
+        try:
+            js = fp.read_text(encoding="utf-8")
+        except Exception as exc:
+            _eprint("[warn] vendor 库读取失败（%s）—— 本次退回 CDN 外链。" % exc)
+            return VENDOR_CDN_TAGS
+        js = js.replace("</script", "<\\/script").replace("</SCRIPT", "<\\/SCRIPT")
+        parts.append("<script>/* doc-atlas:vendor %s (inline) */\n%s\n</script>" % (label, js))
+        names.append(label)
+    marker = "<!-- doc-atlas:vendor inline %s -->" % " ".join(names)
+    return marker + "\n" + "\n".join(parts)
 
 
 def _serialize_and_escape(model):
@@ -308,16 +363,38 @@ def _module_counts(model):
     }
 
 
+def _run_validate(model_path, workspace):
+    """
+    渲染前调用同级 validate_model.py（stdlib）做结构/交叉引用/页码越界/阈值校验。
+    返回其退出码；脚本缺失则警告并返回 0（不阻断）。
+    """
+    validator = Path(__file__).resolve().parent / "validate_model.py"
+    if not validator.is_file():
+        _eprint("[warn] 未找到同级 validate_model.py，跳过渲染前校验：%s" % validator)
+        return 0
+    cmd = [sys.executable, str(validator), str(model_path)]
+    if workspace:
+        cmd += ["--workspace", str(workspace)]
+    _eprint("[info] 渲染前校验：%s" % " ".join(cmd))
+    try:
+        proc = subprocess.run(cmd)
+    except Exception as exc:
+        _eprint("[warn] 调用 validate_model.py 失败：%s" % exc)
+        return 1
+    return proc.returncode
+
+
 def _run_selfcheck(out_html):
     """
-    渲染成功后调用同级 selfcheck.py。用 /usr/bin/python3（系统 3.9，playwright 可用）。
+    渲染成功后调用同级 selfcheck.py（该脚本会在缺 playwright 时自动切换到 .venv python）。
     返回 selfcheck 进程的退出码；找不到 selfcheck.py 则警告并返回 0（不阻断主流程成功）。
     """
     selfcheck = Path(__file__).resolve().parent / "selfcheck.py"
     if not selfcheck.is_file():
         _eprint("[warn] 未找到同级 selfcheck.py，跳过自检：%s" % selfcheck)
         return 0
-    py = "/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable
+    import shutil as _shutil
+    py = _shutil.which("python3") or sys.executable
     _eprint("[info] 运行自检：%s %s %s" % (py, selfcheck, out_html))
     try:
         proc = subprocess.run([py, str(selfcheck), str(out_html)])
@@ -340,6 +417,10 @@ def main(argv=None):
                         help="模板路径；缺省=脚本同级 ../templates/dashboard.html")
     parser.add_argument("--self-check", action="store_true",
                         help="渲染后调用 selfcheck.py，并把其退出码并入本进程")
+    parser.add_argument("--cdn", action="store_true",
+                        help="不内联 Chart.js/Mermaid，改用 CDN 外链（输出依赖网络，缺省为内联）")
+    parser.add_argument("--skip-validate", action="store_true",
+                        help="跳过渲染前的 validate_model.py 结构/交叉引用校验（不建议）")
     args = parser.parse_args(argv)
 
     # --- 路径默认值解析 ---
@@ -357,6 +438,14 @@ def main(argv=None):
         # 默认 = 本脚本同级 ../templates/dashboard.html
         template_path = Path(__file__).resolve().parent.parent / "templates" / "dashboard.html"
 
+    # --- 0) 渲染前校验：结构 / 交叉引用 / 页码越界 / 炼化阈值 ---
+    if not args.skip_validate:
+        rc = _run_validate(model_path, workspace)
+        if rc != 0:
+            _eprint("[error] model.json 未通过校验（validate_model.py 退出码 %d）。"
+                    "请修正后重试；确须跳过可加 --skip-validate（不建议）。" % rc)
+            return 2
+
     # --- 1) 读 + 轻校验 model.json ---
     model = _load_model(model_path)
 
@@ -370,9 +459,10 @@ def main(argv=None):
     # --- 4) 读模板 + 校验注入位唯一 ---
     tpl = _load_template(template_path)
 
-    # 序列化 + 转义 + 单 token 替换（只替换这一个 token）
+    # 序列化 + 转义 + token 替换（数据位 + 前端库注入位各一处）
     payload = _serialize_and_escape(model)
-    out_html = tpl.replace(DATA_TOKEN, payload)
+    vendor_html = _build_vendor_html(template_path, args.cdn)
+    out_html = tpl.replace(DATA_TOKEN, payload).replace(VENDOR_TOKEN, vendor_html)
 
     # --- 5) 写 OUT_HTML ---
     try:
@@ -386,6 +476,8 @@ def main(argv=None):
     counts = _module_counts(model)
     size_kb = out_path.stat().st_size / 1024.0
     print("[ok] 已生成面板：%s (%.1f KB)" % (out_path, size_kb))
+    print("     前端库：%s" % ("CDN 外链（依赖网络）" if "doc-atlas:vendor cdn" in vendor_html
+                              else "已内联（零外链，断网可开）"))
     print("     内嵌图片：%d 张；缺失图片：%d 张" % (embedder.embedded, embedder.missing))
     print("     模块计数 → keypoints=%d diagrams=%d charts=%d conflicts=%d chapters=%d"
           % (counts["keypoints"], counts["diagrams"], counts["charts"],

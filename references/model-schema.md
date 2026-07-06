@@ -93,22 +93,32 @@
 
 ### 3.1c `distillation_report`（炼化体检表，建议给）
 
-把"这份面板是否真的把原文炼化到位"变成看得见的指标，交付时讲给用户，是"可以信它、不必回去翻 PDF"的依据：
+把"这份面板是否真的把原文炼化到位"变成看得见的指标，交付时讲给用户，是"可以信它、不必回去翻 PDF"的依据。
+**分两层：数值字段给机器（`validate_model.py` 据此强制执行阈值纪律），同名字符串字段是展示文案（面板优先显示文案，缺省由数值合成）。数值字段务必给全，否则阈值只能靠自觉：**
 
 ```jsonc
 "distillation_report": {
   "source_words": 3901,                 // 原文字数（各 meta.json 汇总）
-  "compression_ratio": "约 6:1",        // 原文字数 : model 正文字数；~3:1–10:1 为宜
-  "section_coverage": "11/11 章已映射", // 每个源章节至少落到一个 outline 节点；须 100%
+  "model_words": 620,                   // model 正文字数（压缩比核算基准）
+  "compression_ratio_x": 6.3,           // 压缩倍数（数值）；~3–10 为宜，<2 疑似搬运、>15 疑似漏
+  "compression_ratio": "约 6:1",        // 展示文案
+  "sections_total": 11,                 // 源章节总数（数值）
+  "sections_mapped": 11,                // 已映射数；必须 == sections_total（覆盖率 100%）
+  "section_coverage": "11/11 章已映射", // 展示文案
+  "claims_total": 60,                   // 声明/数据点总数（数值）
+  "claims_with_source_count": 60,       // 带溯源的声明数；必须 == claims_total
   "claims_with_source": "100%（0 条无源）",
-  "todo_ratio": "3 处待核实 / 约 60 数据点 ≈ 5%",  // >10% 先回查表格再交付
+  "todo_count": 3,                      // 「待核实」条数（数值）
+  "data_points": 60,                    // 分母；todo_count/data_points > 10% 校验器直接拦（退出码 1）
+  "todo_ratio": "3 处待核实 / 约 60 数据点 ≈ 5%",  // 展示文案
   "derived_numbers": 4,                 // 自己推算的数字条数（应全部带推算依据）
   "unmapped_source_blocks": [],         // 源里没被收进 model 的内容（应为空或给理由）
   "fact_check": "已核 23 条、修正 3 条、补回 2 条遗漏（阶段二·五）"
 }
 ```
 
-所有字段可选；给了就在面板"炼化体检"区以小指标展示。阈值纪律见 `merge-and-structure.md` §9。
+所有字段可选；给了就在面板"炼化体检"区以小指标展示。阈值纪律见 `merge-and-structure.md` §9；
+机器执行由 `scripts/validate_model.py` 完成（渲染器渲染前自动调用）。
 
 ### 3.2 `files`
 
