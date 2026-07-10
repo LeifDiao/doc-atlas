@@ -8,6 +8,8 @@
 
 > **中文简介：** 把一份或多份文档梳理整合成一个精美、离线可开的单文件可视化信息面板的 Claude Code 技能。左侧统一目录树，右侧是一条固定阅读主线（一句话定论 / 关键指标卡 / 大尺寸逻辑关系图 / 图表 / 冲突对照 / 折叠章节详情），每条结论都能溯源回「哪个文件第几页」。完整中文文档 → [README_zh.md](./README_zh.md)
 
+<img width="2082" height="1177" alt="Screenshot 2026-07-10 at 10 26 55 AM" src="https://github.com/user-attachments/assets/1fd4d2b6-3a50-40c7-8073-1e4cd1b3976d" />
+
 > 🆕 **v1.0.0** — renewed end-to-end with **Claude Fable 5**: a redesigned "paper briefing"
 > UI with a one-sentence verdict up top, goal-driven distillation (it now asks *what you
 > want out of the documents* and grades importance against that), and trust metrics that
