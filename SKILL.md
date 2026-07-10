@@ -51,14 +51,21 @@ python3 "$SKILL_DIR/scripts/scan_docs.py" .        # 或换成用户指定的文
 
 `scan_docs.py` 递归列出当前文件夹里所有候选文档（pdf / word / ppt / excel / html / epub / md / txt…），自动跳过隐藏目录、`.venv`、`node_modules`、`doc-atlas-out` 以及含 `SKILL.md` 的 skill 包目录。
 
-### 0.2 一次 AskUserQuestion 同屏确认两件事（不要拆成两轮）
+### 0.2 一次 AskUserQuestion 同屏确认三件事（不要拆成多轮）
 
 拿到清单后**必须与用户确认，不要擅自全量开跑**。把编号清单（文件名 / 类型 / 大小）呈现给用户，然后用**一次** AskUserQuestion 同时问：
 
 1. **输出语言**：「你想要哪种语言的信息面板？ ① 中文 ② English ③ 跟随文档原语言 ④ 其他」
 2. **文件取舍**：「以上文件是否都纳入梳理整合？要去掉哪些？有没有遗漏（比如埋在子目录里的）？」
+3. **阅读目标**：「你最想从这批文档得到什么？ ① 决策参考（要做判断/取舍） ② 学习理解（搞懂讲了什么） ③ 风险审查（找坑/找问题） ④ 数据核对（提取关键数字） ⑤ 其他（自填）」
 
-多文件时可在同一表单里追加第三问：它们大概什么关系（同主题不同版本 / 时间序列 / 总分 / 互相引用），有助于阶段二定合并策略。
+多文件时可在同一表单里追加第四问：它们大概什么关系（同主题不同版本 / 时间序列 / 总分 / 互相引用），有助于阶段二定合并策略。
+
+**阅读目标记为 `READING_GOAL`，写进 `meta.reading_goal`，是整条流水线的"问题意识"**：
+- 重要性分级（high/medium/low）按"对这个目标的重要性"打，不是按篇幅。
+- `highlights` 选"回答这个目标最需要的 4–6 个数字"。
+- `meta.one_liner`（定论）**直接回答这个目标**，不是泛泛总结。
+- 用户跳过不答时缺省视为「学习理解」，不追问。
 
 **语言选择记为 `UI_LANG`，贯穿全程**：
 - `meta.ui_lang` = 用户选择；`meta.content_lang` = 文档主要语言（二者可不同）。
@@ -136,9 +143,12 @@ fi
 
 | 层级 | 内容 | model.json 落点 | 默认呈现 |
 |---|---|---|---|
-| **L1 概览** | ≤5 句执行摘要 + 4–6 个核心数字 | `meta.executive_summary` + `highlights[]` | 首屏直接显示 |
+| **L1 概览** | 一句话定论 + ≤5 句执行摘要 + 4–6 个核心数字 | `meta.one_liner` + `meta.executive_summary` + `highlights[]` | 首屏直接显示 |
 | **L2 要点** | high/medium 要点、核心逻辑图、核心图表 | `keypoints[]` / `diagrams[]` / `charts[]` | 默认显示 |
 | **L3 细节** | 章节正文、参数表、工况表、质保表 | `chapters[].blocks` | 章节体默认折叠，点开才看 |
+
+- **`meta.one_liner`（定论，强烈建议给）**：面板首屏的 The Bottom Line 大字条。写法：直接回答
+  `reading_goal`，把核心结论 + 最关键数字 + 转折压进一句话。缺省时面板回退用 `executive_summary[0]`。
 
 - **`highlights[]`（顶层，强烈建议给）**：把全篇 4–6 个最关键数字做成首屏大号指标卡（如「8 小时 / 纯电驻车」「<3% / 占整车重」「22 万 / 10 年累计节省」）。这是"极少内容获取主要"的最直接实现。
 - 章节内也可用 `metric` block 给局部关键数字一个大字号出口。
@@ -158,7 +168,12 @@ fi
 
 ### 2.4 炼化纪律（让"高度炼化"看得见、靠得住）
 
-**"高度炼化" ≠ "变短"**，它要同时满足：①跨文件/跨章去重；②升维归纳（从"原文怎么说"升到"结论/因果/对比"）；③关键信息（数字/标准号/参数/前置条件）零丢失且溯源；④重要性分级反映"对决策的重要性"。
+**"高度炼化" ≠ "变短"**，它要同时满足：①跨文件/跨章去重；②升维归纳（从"原文怎么说"升到"结论/因果/对比"）；③关键信息（数字/标准号/参数/前置条件）零丢失且溯源；④重要性分级反映"对 `reading_goal` 的重要性"。
+
+- **概念清单要落盘（`$OUT/workspace/_concepts.jsonl`）**：阶段二边读边维护的"概念→出处"表不要只留在草稿里，写成 JSONL 正式中间产物，每行一条：
+  `{"concept": "...", "statement": "...", "file_id": "f1", "page": 3, "loc": null, "disposition": "kept|merged|dropped", "target": "1.2"}`
+  （`disposition` 记收/并/弃，`target` 记落到哪个 outline 节点/keypoint；弃收的写明原因。）
+  好处：`claims_total` 等体检数字从清单**数出来**而不是拍出来；核查 agent 可审计"收了什么、弃了什么"；超长文档分批读可断点续作。多文件/长文任务**必做**，单短文件可省。
 
 - **完整性批判第二遍（必做）**：第一遍写完 model.json 后，**重读 source 自问**："哪个**重要数字 / 前置条件 / 结论**原文有、model 却没有？" 把找到的补回去，循环到"再读一遍也挑不出新的"。
 - **填 `distillation_report` 并自检阈值**（顶层可选字段，强烈建议给，交付时讲给用户）。**数值字段必须给全**（`sections_total/sections_mapped`、`claims_total/claims_with_source_count`、`todo_count/data_points`、`compression_ratio_x`），`validate_model.py` 据此机器执行纪律，展示文案字段可另给：
@@ -192,11 +207,16 @@ draft 出 `model.json` 后、渲染之前，**加一道独立核查闸**——�
 - **核查清单**：每条 high/medium 的数字与结论，判定 `✅准确 / ⚠️偏差 / ❌错误或幻觉 / ➖遗漏`，并附原文出处。重点查三类：① 幻觉（原文没有却写了）② 遗漏（原文有却没收/误标待核实）③ **派生数字验算**（亲手重算节省额/CO₂/续航小时等，核口径自洽）。
 - **关键纪律：核查 agent 必须能读原始文件（Read 工具 pages 参数 / 原图），不能只读 `content.md`**——因为 content.md 可能本身丢了表格数值列，只读它会和阶段二犯同样的盲区。
 
+**核查结果落盘（产物契约）**：核查记录写成 `$OUT/factcheck.json`——一个数组，每条
+`{"claim": "...", "verdict": "ok|deviation|error|missing", "source": {"file_id": "f2", "page": 12}, "note": "怎么处理的"}`
+（与 `distillation_report.fact_check_items` 同构，`verdict` 对应 ✅/⚠️/❌/➖）。
+
 **核查结果回流**：
 - `❌ 错误 / 幻觉` → **必须改**，改完重渲染。
 - `➖ 遗漏（原文确有）` → 补进 model.json。
 - `⚠️ 偏差 / 口径问题` → 修正，或在文案/`callout` 里显式标注口径。
-- 把核查摘要写进 `distillation_report.fact_check`（如"已核 23 条、修正 3 条、补回 2 条遗漏"），阶段五讲给用户。
+- 把核查摘要写进 `distillation_report.fact_check`（如"已核 23 条、修正 3 条、补回 2 条遗漏"），
+  并把 `factcheck.json` 内容抄进 `distillation_report.fact_check_items`——面板附录会渲染成可展开的核查明细表，是"为什么可以信这份简报"的证据；阶段五讲给用户。
 
 ---
 
@@ -242,7 +262,7 @@ python3 "$SKILL_DIR/scripts/selfcheck.py" "$OUT/dashboard.html"   # 加 --json �
 - **分批**：单文件 ~100 页以上或 `content.md` 超长时分批读取再汇总，避免遗漏后半部分。
 - **语言策略**：`meta.ui_lang`（界面 + AI 撰写文案）跟随**用户在阶段零选定的语言**；`meta.content_lang` 跟随文档主要语言；逐字 `quotes` 保留原文。
 - 禁用 localStorage；输出面板**零外链、零网络请求**（Chart.js / Mermaid 已内联；仅 `--cdn` 模式例外，且须明示用户断网后果）。
-- **界面风格固定为「纸本」皮肤**：暖米纸 + 蓝色强调（重点/风险保留朱红）+ 无衬线正文 + 数字高亮 + 松密度 + 日读，由 `templates/dashboard.html` 决定；AI 不改皮肤、不提供外观切换面板。
+- **界面风格固定为「纸本简报」皮肤**：暖米纸 + 蓝色强调（重点/风险保留朱红）+ 无衬线正文 + 日读；信息结构固定为一条主线——定论(one_liner) → 编号简报区（指标/摘要/逻辑图/图表/要点/冲突）→ 章节详情（折叠）→ 附录（源文件/关系/体检，降调）。由 `templates/dashboard.html` 决定；AI 不改皮肤、不提供外观切换面板。
 
 ---
 

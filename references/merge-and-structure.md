@@ -19,7 +19,7 @@
 ### 操作步骤（按顺序执行）
 
 1. **通读**：完整读每个 `content.md` + 对应 `meta.json`（拿到 heading_index / 页码映射 / 字数 / 日期 / 类型）。超长文档见 §7 分批策略。读 `assets/` 里的图片清单，判断哪些是有信息量的图（流程图/图表/示意图），记下它们的相对路径备用。
-2. **建概念清单**：边读边在草稿里维护一张“概念→出处”表。每遇到一个事实/结论/数字/定义/术语，记一行：`概念 | 表述 | file_id | page/loc`。这张表是后续去重、冲突、互补判断的唯一依据。
+2. **建概念清单（落盘为正式产物）**：边读边维护一张“概念→出处”表，写进 `$OUT/workspace/_concepts.jsonl`（每行 `{"concept","statement","file_id","page","loc","disposition","target"}`，`disposition` 记 kept/merged/dropped、`target` 记落点）。这张表是后续去重、冲突、互补判断的唯一依据，也是 `claims_total` 等体检数字的来源（数出来，不是拍出来）、核查 agent 的审计底稿、超长文档分批的断点。多文件/长文必做，单短文件可省。
 3. **判断文件关系**（§4）：先定全局策略（版本迭代？时间序列？总分？平行互补？），它决定后面所有合并动作的取舍方向。
 4. **聚类去重**（§1）：把概念清单里指向“同一件事”的行归并成簇，每簇 = 未来的一个 outline 节点或 keypoint。
 5. **标冲突**（§2）：同一簇内表述互相矛盾的，拆出来进 `conflicts[]`。
@@ -187,7 +187,7 @@ graph LR
 
 让面板天然分三层（L1 概览 10 秒、L2 要点 1–2 分钟、L3 细节按需），是"高度炼化、一眼看懂"的落点：
 
-- **L1 概览**：`meta.executive_summary`（3–5 句，写**合并后的全局判断**：核心结论 + 最关键数字 + 有无重大冲突 + 文件集整体讲了什么，至少 1 句）+ `highlights[]`（4–6 个核心数字，上首屏大号卡）。这两样决定读者"10 秒看不看得懂"。
+- **L1 概览**：`meta.one_liner`（一句话定论，**直接回答 `meta.reading_goal`**，渲染成首屏 The Bottom Line 大字条）+ `meta.executive_summary`（3–5 句，写**合并后的全局判断**：核心结论 + 最关键数字 + 有无重大冲突 + 文件集整体讲了什么，至少 1 句）+ `highlights[]`（4–6 个核心数字，上首屏大号卡）。这三样决定读者"10 秒看不看得懂"。
 - **L2 要点**：`keypoints[]`（high/medium）+ 核心 `diagrams[]` / `charts[]`，默认显示。
 - **L3 细节**：`chapters[].blocks`（章节正文、参数表、工况表…），模板里**章节体默认折叠**，点"展开"才看——所以章节正文要写得"折叠时看标题+小结也成立、展开才看细节"。
 - `stats`：`file_count` 必填；`total_pages`/`total_words` 从各 `meta.json` 汇总，拿不到填 `null`；`reading_minutes` 可由字数估算（中文约 300–500 字/分），拿不到填 `null`。
@@ -260,3 +260,7 @@ graph LR
 - `claims_with_source_count < claims_total` → 有无源声明，补源或删。〔校验器直接拦〕
 - `compression_ratio_x` 落在 ~3 到 ~10 才算“既炼又不漏”；接近 1 = 只是搬运，过高（如 >15）= 可能漏。〔校验器告警〕
 - `unmapped_source_blocks` 应为空；非空就要给出“为何不收”的理由（如纯版式/重复目录）。
+- **别拍数字——校验器会对账**：给了 `--workspace` 时，`files[].pages`、`stats.total_pages` 与
+  meta.json 不一致直接报错；`source_words`/`total_words`/`files[].words` 偏差超 20% 告警；
+  `sections_total` 小于文件数告警。页数/字数一律从 meta.json 抄，`claims_total`/`todo_count`
+  从 `_concepts.jsonl` 数。

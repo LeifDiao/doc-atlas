@@ -168,6 +168,37 @@
         "fact_check": {
           "description": "阶段二·五核查结论摘要，如「已核 23 条、修正 3 条、补回 2 条遗漏」。",
           "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "fact_check_items": {
+          "description": "阶段二·五核查明细（$OUT/factcheck.json 的回流），面板附录可展开逐条查看。可省略。",
+          "type": "array",
+          "items": { "$ref": "#/$defs/FactCheckItem" }
+        }
+      }
+    },
+
+    "FactCheckItem": {
+      "type": "object",
+      "description": "一条事实核查记录：核了什么、判定如何、出处在哪、做了什么处理。",
+      "additionalProperties": false,
+      "required": ["claim", "verdict"],
+      "properties": {
+        "claim": {
+          "type": "string",
+          "description": "被核查的数字/事实/结论（原样摘录或概括）。"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["ok", "deviation", "error", "missing"],
+          "description": "判定：ok=✅准确 / deviation=⚠️偏差 / error=❌错误或幻觉 / missing=➖遗漏（原文有、model 漏收）。"
+        },
+        "source": {
+          "description": "核查时对照的原文出处。",
+          "oneOf": [{ "$ref": "#/$defs/SourceRef" }, { "type": "null" }]
+        },
+        "note": {
+          "description": "处理说明：怎么修的 / 为什么判偏差 / 补回了什么。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
         }
       }
     },
@@ -233,6 +264,18 @@
           "description": "执行摘要，3–5 句，至少 1 句。",
           "minItems": 1,
           "items": { "type": "string" }
+        },
+        "one_liner": {
+          "description": "一句话定论（面板首屏 The Bottom Line）：直接回答 reading_goal 的全局判断。缺省时面板回退用 executive_summary[0]。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "reading_goal": {
+          "description": "阶段零向用户确认的阅读目标（读者带着什么问题来），如「评估要不要续约」。重要性分级 / highlights / one_liner 都应对着它做。",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        },
+        "schema_version": {
+          "description": "model.json 结构版本（当前 2）。可省略；供未来迁移检测。",
+          "oneOf": [{ "type": "integer" }, { "type": "null" }]
         }
       }
     },

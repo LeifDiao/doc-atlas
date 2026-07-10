@@ -13,6 +13,9 @@ validate_model.py —— 阶段二产物 model.json 的机器校验闸（渲染�
      - outline / files / chapters 等 id 不得重复。
   3. 溯源核查（给 --workspace 时）：按 files[].id ↔ workspace/*/meta.json 的 file_id
      （退而求其次按文件名）配对，校验所有 SourceRef.page 落在 [1, pages] 内。
+  3.5 ground-truth 对账（给 --workspace 时）：自报数字 vs meta.json 汇总——
+     files[].pages / stats.total_pages 不一致算错误；words 类偏差超容差告警；
+     sections_total < 文件数告警。防止炼化体检"自己出题自己打分"。
   4. 炼化阈值（distillation_report 给了数值字段才执行）：
      - sections_mapped == sections_total（章节覆盖 100%）；
      - claims_with_source_count == claims_total（溯源率 100%）；
@@ -52,7 +55,12 @@ DISTILL_KEYS = {
     "claims_total", "claims_with_source_count", "claims_with_source",
     "todo_count", "data_points", "todo_ratio",
     "derived_numbers", "unmapped_source_blocks", "fact_check",
+    "fact_check_items",
 }
+FC_VERDICTS = {"ok", "deviation", "error", "missing"}
+
+# workspace 对账：自报 source_words 与 meta.json 汇总偏差超过该比例 → 告警
+SOURCE_WORDS_TOLERANCE = 0.20
 
 TODO_RATIO_MAX = 0.10          # todo 占比纪律线
 COMPRESSION_SOFT_RANGE = (2.0, 15.0)  # 压缩倍数软区间（出界仅告警）
@@ -176,13 +184,16 @@ def _check_meta(rep, meta, refs):
         return
     _check_keys(rep, path, meta,
                 {"title", "content_lang", "ui_lang", "generated_at", "stats",
-                 "executive_summary"},
+                 "executive_summary", "one_liner", "reading_goal", "schema_version"},
                 ("title", "content_lang", "stats", "executive_summary"))
     for k in ("title", "content_lang"):
         if k in meta and not _is_str(meta[k]):
             rep.err("%s.%s" % (path, k), "应为字符串")
     _check_opt_str(rep, path, meta, "ui_lang")
     _check_opt_str(rep, path, meta, "generated_at")
+    _check_opt_str(rep, path, meta, "one_liner")
+    _check_opt_str(rep, path, meta, "reading_goal")
+    _check_opt_int(rep, path, meta, "schema_version")
     stats = meta.get("stats")
     if isinstance(stats, dict):
         _check_keys(rep, path + ".stats", stats,
@@ -570,7 +581,7 @@ def _check_chapters(rep, chapters, refs, pools):
     return ids
 
 
-def _check_distillation(rep, d):
+def _check_distillation(rep, d, refs):
     if d is None:
         return
     path = "distillation_report"
@@ -591,6 +602,27 @@ def _check_distillation(rep, d):
     usb = d.get("unmapped_source_blocks")
     if usb is not None and not isinstance(usb, list):
         rep.err(path + ".unmapped_source_blocks", "应为数组")
+    fci = d.get("fact_check_items")
+    if fci is not None:
+        if not isinstance(fci, list):
+            rep.err(path + ".fact_check_items", "应为数组")
+        else:
+            for i, it in enumerate(fci):
+                ipath = "%s.fact_check_items[%d]" % (path, i)
+                if not isinstance(it, dict):
+                    rep.err(ipath, "应为对象")
+                    continue
+                _check_keys(rep, ipath, it, {"claim", "verdict", "source", "note"},
+                            ("claim", "verdict"))
+                if "claim" in it and not _is_str(it["claim"]):
+                    rep.err(ipath + ".claim", "应为字符串")
+                if "verdict" in it and it["verdict"] not in FC_VERDICTS:
+                    rep.err(ipath + ".verdict",
+                            "非法枚举 %r（ok/deviation/error/missing）" % it.get("verdict"))
+                _check_opt_str(rep, ipath, it, "note")
+                # source 复用 SourceRef 检查，并加入 refs 参与 file_id / 页码越界核查
+                if it.get("source") is not None:
+                    _check_source_ref(rep, ipath + ".source", it["source"], refs)
 
     # ── 炼化阈值（只在数值字段齐备时执行）──
     st, sm = d.get("sections_total"), d.get("sections_mapped")
@@ -676,6 +708,100 @@ def _check_pages_against_workspace(rep, model, refs, workspace):
                     % (page, fid, pages))
 
 
+# ────────────────────────────────────────────── workspace 对账（ground truth）──
+
+def _load_workspace_metas(workspace):
+    """扫描 workspace/*/meta.json，返回 [meta dict, ...]（读不出的跳过）。"""
+    metas = []
+    if not workspace or not os.path.isdir(workspace):
+        return metas
+    for entry in sorted(os.listdir(workspace)):
+        mp = os.path.join(workspace, entry, "meta.json")
+        if not os.path.isfile(mp):
+            continue
+        try:
+            with open(mp, "r", encoding="utf-8") as f:
+                m = json.load(f)
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(m, dict):
+            metas.append(m)
+    return metas
+
+
+def _reconcile_against_workspace(rep, model, workspace):
+    """
+    自报数字 vs workspace ground truth 对账（防"自己出题自己打分"）：
+      - files[].pages / meta.stats.total_pages 必须与 meta.json 完全一致（错误）；
+      - files[].words / stats.total_words / distillation_report.source_words
+        与 meta.json 汇总偏差 > SOURCE_WORDS_TOLERANCE（告警，字数口径允许小差）；
+      - distillation_report.sections_total < 文件数（告警，每个文件至少一章）。
+    找不到任何 meta.json 时静默跳过（_check_pages_against_workspace 已告警）。
+    """
+    metas = _load_workspace_metas(workspace)
+    if not metas:
+        return
+    by_id = {m["file_id"]: m for m in metas if isinstance(m.get("file_id"), str)}
+    by_name = {m["file_name"]: m for m in metas if isinstance(m.get("file_name"), str)}
+
+    def meta_of(f):
+        if f.get("id") in by_id:
+            return by_id[f["id"]]
+        if f.get("name") in by_name:
+            return by_name[f["name"]]
+        return None
+
+    def words_off(claimed, actual):
+        return (_is_int(claimed) and _is_int(actual) and actual > 0
+                and abs(claimed - actual) / actual > SOURCE_WORDS_TOLERANCE)
+
+    sum_pages, sum_words = 0, 0
+    have_pages, have_words = False, False
+    for i, f in enumerate(model.get("files") or []):
+        if not isinstance(f, dict):
+            continue
+        wm = meta_of(f)
+        if wm is None:
+            continue
+        mp, mw = wm.get("pages"), wm.get("words")
+        if _is_int(mp):
+            sum_pages += mp
+            have_pages = True
+            if _is_int(f.get("pages")) and f["pages"] != mp:
+                rep.err("files[%d].pages" % i,
+                        "与 workspace meta.json 不一致：自报 %d，实际 %d" % (f["pages"], mp))
+        if _is_int(mw):
+            sum_words += mw
+            have_words = True
+            if words_off(f.get("words"), mw):
+                rep.warn("files[%d].words" % i,
+                         "与 workspace meta.json 偏差超 %d%%：自报 %d，实际 %d"
+                         % (100 * SOURCE_WORDS_TOLERANCE, f["words"], mw))
+
+    stats = (model.get("meta") or {}).get("stats") if isinstance(model.get("meta"), dict) else None
+    if isinstance(stats, dict):
+        if have_pages and _is_int(stats.get("total_pages")) and stats["total_pages"] != sum_pages:
+            rep.err("meta.stats.total_pages",
+                    "与 workspace meta.json 汇总不一致：自报 %d，实际 %d"
+                    % (stats["total_pages"], sum_pages))
+        if have_words and words_off(stats.get("total_words"), sum_words):
+            rep.warn("meta.stats.total_words",
+                     "与 workspace meta.json 汇总偏差超 %d%%：自报 %d，实际 %d"
+                     % (100 * SOURCE_WORDS_TOLERANCE, stats["total_words"], sum_words))
+
+    d = model.get("distillation_report")
+    if isinstance(d, dict):
+        if have_words and words_off(d.get("source_words"), sum_words):
+            rep.warn("distillation_report.source_words",
+                     "与 workspace meta.json 汇总偏差超 %d%%：自报 %d，实际 %d"
+                     % (100 * SOURCE_WORDS_TOLERANCE, d["source_words"], sum_words))
+        n_files = len(model.get("files") or [])
+        if _is_int(d.get("sections_total")) and d["sections_total"] < n_files:
+            rep.warn("distillation_report.sections_total",
+                     "自报源章节总数 %d < 文件数 %d（每个文件至少一章，疑似漏报）"
+                     % (d["sections_total"], n_files))
+
+
 # ──────────────────────────────────────────────────────────────── 主流程 ──
 
 def validate(model, workspace=None):
@@ -731,16 +857,18 @@ def validate(model, workspace=None):
     for extra in sorted(sc - so):
         rep.err("chapters", "章节 %r 没有对应的一级 outline 节点" % extra)
 
-    # SourceRef.file_id 全部命中 files[].id
+    # 先校验 distillation（其 fact_check_items[].source 也要进 refs），
+    # 再统一核 SourceRef.file_id 全部命中 files[].id
+    _check_distillation(rep, model.get("distillation_report"), refs)
+
     fid_set = set(file_ids)
     for path, fid, _page in refs:
         if fid not in fid_set:
             rep.err(path, "file_id %r 不在 files[].id 中" % fid)
 
-    _check_distillation(rep, model.get("distillation_report"))
-
     if workspace:
         _check_pages_against_workspace(rep, model, refs, workspace)
+        _reconcile_against_workspace(rep, model, workspace)
 
     return rep
 

@@ -70,9 +70,20 @@
   "stats": {                     // file_count 必填，其余可为 null
     "file_count": 2, "total_pages": 47, "total_words": 18600, "reading_minutes": 62
   },
-  "executive_summary": ["...", "..."]   // 3–5 句，至少 1 句
+  "executive_summary": ["...", "..."],  // 3–5 句，至少 1 句
+  "one_liner": "一句话定论",      // 可选但强烈建议：面板首屏 The Bottom Line
+  "reading_goal": "评估要不要续约", // 可选：阶段零向用户确认的阅读目标
+  "schema_version": 2            // 可选：结构版本，当前 2
 }
 ```
+
+- **`one_liner`（定论，强烈建议给）**：全篇最重要的一句话判断，渲染成首屏"The Bottom Line"大字条。
+  写法：直接回答 `reading_goal`（用户带着什么问题来），把核心结论 + 最关键数字 + 转折压进一句话；
+  不是标题复述，也不是"本文档介绍了…"。缺省时面板回退用 `executive_summary[0]`。
+- **`reading_goal`**：阶段零问出来的阅读目标，原样记录。重要性分级、highlights 取舍、
+  one_liner 都应对着它做；面板会在报头展示，让读者知道这份简报的视角。
+- `stats` 的 `total_pages`/`total_words` **从各 meta.json 汇总抄**，不要估：给了 `--workspace`
+  时 `validate_model.py` 会拿 meta.json 对账，页数不一致直接报错。
 
 ### 3.1b `highlights`（首屏关键指标卡，强烈建议）
 
@@ -113,12 +124,24 @@
   "todo_ratio": "3 处待核实 / 约 60 数据点 ≈ 5%",  // 展示文案
   "derived_numbers": 4,                 // 自己推算的数字条数（应全部带推算依据）
   "unmapped_source_blocks": [],         // 源里没被收进 model 的内容（应为空或给理由）
-  "fact_check": "已核 23 条、修正 3 条、补回 2 条遗漏（阶段二·五）"
+  "fact_check": "已核 23 条、修正 3 条、补回 2 条遗漏（阶段二·五）",
+  "fact_check_items": [                 // 可选：核查明细（$OUT/factcheck.json 回流）
+    { "claim": "全年营收 41.2 亿", "verdict": "ok",
+      "source": { "file_id": "f2", "page": 12 }, "note": null },
+    { "claim": "毛利率 -3pp", "verdict": "error", "source": { "file_id": "f2", "page": 15 },
+      "note": "原文为 -2.1pp，已修正" }
+  ]
 }
 ```
 
-所有字段可选；给了就在面板"炼化体检"区以小指标展示。阈值纪律见 `merge-and-structure.md` §9；
+所有字段可选；给了就在面板附录"炼化体检"区以小指标展示。阈值纪律见 `merge-and-structure.md` §9；
 机器执行由 `scripts/validate_model.py` 完成（渲染器渲染前自动调用）。
+
+- **`fact_check_items`**：阶段二·五逐条核查记录（`verdict` ∈ `ok`✅ / `deviation`⚠️ /
+  `error`❌ / `missing`➖），面板附录里可展开逐条查看——这是"为什么可以信这份简报"的明细证据。
+  `source` 复用 `SourceRef`，同样参与 file_id / 页码越界核查。
+- **对账提醒**：`source_words` 从各 meta.json 的 `words` 汇总抄；给了 `--workspace` 时
+  validator 会核对，偏差超 20% 告警。`sections_total` 少于文件数也会被提示（每个文件至少一章）。
 
 ### 3.2 `files`
 

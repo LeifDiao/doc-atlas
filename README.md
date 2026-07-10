@@ -6,21 +6,30 @@
 
 🌏 [中文版](./README_zh.md) · 🖥 [Live page](https://leifdiao.github.io/doc-atlas/) · 🧩 [Sample dashboard](https://leifdiao.github.io/doc-atlas/sample-dashboard.html) · 📝 [Changelog](./CHANGELOG.md) · ⚖️ [License](./LICENSE)
 
-> **中文简介：** 把一份或多份文档梳理整合成一个精美、离线可开的单文件可视化信息面板的 Claude Code 技能。左侧统一目录树，右侧按内容自动选取模块（摘要 / 关键指标卡 / 大尺寸逻辑关系图 / 图表 / 冲突对照 / 章节详情），每条结论都能溯源回「哪个文件第几页」。完整中文文档 → [README_zh.md](./README_zh.md)
+> **中文简介：** 把一份或多份文档梳理整合成一个精美、离线可开的单文件可视化信息面板的 Claude Code 技能。左侧统一目录树，右侧是一条固定阅读主线（一句话定论 / 关键指标卡 / 大尺寸逻辑关系图 / 图表 / 冲突对照 / 折叠章节详情），每条结论都能溯源回「哪个文件第几页」。完整中文文档 → [README_zh.md](./README_zh.md)
+
+> 🆕 **v1.0.0** — renewed end-to-end with **Claude Fable 5**: a redesigned "paper briefing"
+> UI with a one-sentence verdict up top, goal-driven distillation (it now asks *what you
+> want out of the documents* and grades importance against that), and trust metrics that
+> are audited against ground truth instead of self-reported. Details in the
+> [changelog](./CHANGELOG.md).
 
 ---
 
-A left-hand unified table-of-contents tree; on the right, modules chosen automatically by
-what the content needs: an executive summary, first-screen key-metric cards, a
-**large logic / relationship diagram (the centerpiece — click to zoom)**, data charts
-(Chart.js), conflict comparisons, and chapter details. Every claim carries a source badge
-and traces back to *which file, which page*. On each run it scans first, then **confirms
-the dashboard language and file selection with you in a single prompt**.
+A left-hand unified table-of-contents tree; on the right, a fixed briefing spine: **a
+one-sentence verdict (The Bottom Line)**, first-screen key-metric cards, an executive
+summary, a **large logic / relationship diagram (the centerpiece — click to zoom)**, data
+charts (Chart.js), tiered key points, conflict comparisons, collapsed chapter details, and
+a quiet appendix (source files / relations / distillation check). Every claim carries a
+source badge and traces back to *which file, which page*. On each run it scans first, then
+**confirms the dashboard language, file selection, and your reading goal in a single
+prompt** — the whole distillation is graded against the question you actually brought.
 
 Three core pursuits: **① highly distilled** (the dashboard is enough — no need to open the
 source), **② accurate and traceable** (zero hallucination, honest "unverified" flags, run
-through an adversarial fact-check), and **③ the logic diagram is the star** (turn the core
-causality / relationships into a prominent, large diagram).
+through an adversarial fact-check whose per-claim findings render in the appendix), and
+**③ the logic diagram is the star** (turn the core causality / relationships into a
+prominent, large diagram).
 
 ## What it does
 
@@ -33,22 +42,26 @@ causality / relationships into a prominent, large diagram).
   (when numbers / dates / conclusions disagree, they are listed explicitly rather than
   silently picking one), gaps are filled in, and file relationships are inferred — not a
   file-by-file summary.
-- **Highly distilled + trustworthy** — a three-layer reading model (overview / key points /
-  detail), first-screen metric cards, a **distillation report** (coverage / compression
-  ratio / share still to verify — thresholds machine-enforced by `validate_model.py`), and
-  an **adversarial fact-check** (refute against the source, recompute derived numbers).
+- **Highly distilled + trustworthy** — a three-layer reading model (verdict & overview /
+  key points / detail), first-screen metric cards, a **distillation report** (coverage /
+  compression ratio / share still to verify — thresholds machine-enforced and **reconciled
+  against the workspace ground truth** by `validate_model.py`), and an **adversarial
+  fact-check** (refute against the source, recompute derived numbers) whose per-claim
+  verdicts render as an expandable table in the appendix.
 - **Structured rendering** — the AI only produces a structured `model.json`, which passes
   a machine validation gate (structure / cross-references / page bounds / distillation
   thresholds) and is then compiled by a deterministic renderer into a single-file
   `dashboard.html` (images inlined as base64; **Chart.js / Mermaid inlined too — zero
   external requests, truly opens offline**).
-- **A "paper" skin** — warm rice-paper + blue ink (vermilion kept for emphasis / risk) +
-  a sans-serif body in a magazine-style layout; key numbers auto-highlighted, generous
-  density, the logic diagram rendered full-width.
-- **Interaction** — one-click "key points only / expand all", click-to-zoom diagrams,
+- **A "paper briefing" skin** — warm rice-paper + blue ink (vermilion kept for emphasis /
+  risk) with a fixed reading spine: verdict → numbered briefing sections → collapsed
+  chapters → a visually quiet appendix. One page has exactly one class of big numbers
+  (the key metrics); document stats shrink to a masthead line ("source ≈ 62 min → this
+  page ≈ 7 min"); prose uses the full content width.
+- **Interaction** — one-click "briefing only / expand all", click-to-zoom diagrams,
   full-text search (highlight + jump, auto-expanding the matched chapter), a collapsible
-  TOC tree with scroll highlighting, importance / source filters, and a Chinese / English
-  UI that follows the language you chose.
+  TOC tree with scroll highlighting, importance / source filters tucked into a sidebar
+  tool drawer, and a Chinese / English UI that follows the language you chose.
 
 ## Supported formats
 
@@ -65,14 +78,17 @@ Normalization uses [markitdown](https://github.com/microsoft/markitdown), which 
 ## Workflow (six steps)
 
 0. **Scan + one-shot confirmation** — scan the current folder, list candidate documents,
-   then confirm **the dashboard language and which files to include in a single prompt**;
+   then confirm **the dashboard language, which files to include, and your reading goal in
+   a single prompt** (the goal drives importance grading, metric selection, and the
+   verdict);
 1. **Normalize** — each file → `workspace/<name>/{content.md, assets/, meta.json}` (PDFs
    get per-page anchors; tables extracted structurally to keep numeric columns);
 2. **Consolidate (the core)** — de-duplicate / detect conflicts / complement across files,
-   reassemble into `model.json`, and fill in the distillation report + a second
-   completeness critique;
+   keep an auditable concepts inventory (`_concepts.jsonl`), reassemble into `model.json`,
+   and fill in the distillation report + a second completeness critique;
 3. **Fact-check (adversarial)** — for outward-facing / high-risk documents, dispatch a
-   subagent to refute against the source and recompute derived numbers, then re-render;
+   subagent to refute against the source and recompute derived numbers; findings land in
+   `factcheck.json` and render as a per-claim table in the dashboard appendix;
 4. **Render** — after the `validate_model.py` gate, `model.json (+ workspace)` → single-file `dashboard.html` (zero external links);
 5. **Self-check & deliver** — a headless Playwright check for errors + spot-checking
    sources, then walk you through the distillation report / fact-check findings.

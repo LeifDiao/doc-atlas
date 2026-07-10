@@ -15,7 +15,10 @@
       "全年营收口径在两份文件中存在不一致（38 亿 vs 41.2 亿），已在冲突区标注并倾向采用较新的白皮书口径。",
       "核心结论：云业务连续四个季度双位数增长，但毛利率受基础设施投入拖累，2025 年以提效为主线。",
       "建议优先关注三大风险：客户集中度、汇率波动、数据中心电力成本。"
-    ]
+    ],
+    "one_liner": "云业务连续四个季度双位数增长、全年营收 41.2 亿，但毛利率被基础设施投入拖累——2025 年主线从规模扩张切换为提效。",
+    "reading_goal": "评估云业务全年表现与 2025 年该关注什么",
+    "schema_version": 2
   },
   "files": [
     {
@@ -63,7 +66,17 @@
     "todo_ratio": "1 处待核实 / 约 30 数据点 ≈ 3%",
     "derived_numbers": 2,
     "unmapped_source_blocks": [],
-    "fact_check": "已核 14 条、修正 1 条、补回 1 条遗漏（阶段二·五）"
+    "fact_check": "已核 14 条、修正 1 条、补回 1 条遗漏（阶段二·五）",
+    "fact_check_items": [
+      { "claim": "2024 全年云业务营收 41.2 亿元（白皮书口径）", "verdict": "ok",
+        "source": { "file_id": "f2", "page": 12 }, "note": null },
+      { "claim": "Q4 同比增速 18%，为全年最高", "verdict": "ok",
+        "source": { "file_id": "f2", "page": 8 }, "note": null },
+      { "claim": "毛利率同比下降 3 个百分点", "verdict": "error",
+        "source": { "file_id": "f2", "page": 15 }, "note": "原文为 2.1 个百分点，已修正" },
+      { "claim": "汇率波动为三大风险之一", "verdict": "missing",
+        "source": { "file_id": "f2", "page": 19 }, "note": "初稿遗漏，已补回执行摘要与风险章节" }
+    ]
   },
   "file_relations": {
     "mermaid": "flowchart LR\n  f1[\"Q3 复盘 PPT\\n季度视角\"] -->|数据汇入更新| f2[\"年度白皮书 PDF\\n主干口径\"]\n  f2 -.->|修正全年营收口径| f1",

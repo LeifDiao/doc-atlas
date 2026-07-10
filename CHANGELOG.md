@@ -4,6 +4,66 @@ All notable changes to doc-atlas are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/) and the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## [1.0.0] — 2026-07-10
+
+A goal-driven briefing release, renewed end-to-end with **Claude Fable 5**. The previous
+dashboard rendered a dozen equal-weight sections and left the reader to find the point;
+this release gives every run a question to answer (the reading goal), redesigns the
+dashboard around a single briefing spine with a one-sentence verdict on top, and stops
+letting the distillation report grade its own homework.
+
+### Added
+- **Reading goal (stage 0).** The one-shot confirmation now also asks *what you want out
+  of these documents* (decision / learning / risk review / data lookup / custom). The
+  answer is stored as `meta.reading_goal` and drives importance grading, `highlights`
+  selection, and the verdict — the whole pipeline now has a question to answer instead of
+  summarizing generically.
+- **`meta.one_liner` — "The Bottom Line".** A one-sentence verdict rendered as a large
+  serif bar right under the masthead; it should directly answer the reading goal. Falls
+  back to `executive_summary[0]` when absent. Plus optional `meta.schema_version`.
+- **Fact-check detail contract.** Stage 2.5 findings now land in a structured
+  `$OUT/factcheck.json` (`claim` / `verdict: ok|deviation|error|missing` / `source` /
+  `note`) and flow back into `distillation_report.fact_check_items[]`; the dashboard
+  appendix renders them as an expandable per-claim table — the evidence behind "why you
+  can trust this briefing", not just a one-line summary.
+- **Concepts inventory artifact.** Stage 2's concept→source table is now a first-class
+  intermediate product (`workspace/_concepts.jsonl` with kept/merged/dropped dispositions),
+  so `claims_total`-style metrics are counted rather than asserted, fact-checkers can audit
+  what was dropped, and long-document batch reading can resume mid-way.
+- **Ground-truth reconciliation in `validate_model.py`.** With `--workspace`, self-reported
+  numbers are audited against `meta.json`: page counts must match exactly (error), word
+  counts get a 20% tolerance (warning), and `sections_total` below the file count is
+  flagged — the distillation report can no longer grade its own homework.
+- 8 new tests (45 total) covering the new fields, fact-check-item validation, and the
+  reconciliation checks.
+
+### Changed
+- **Dashboard rebuilt as a "paper briefing"** (same warm-paper temperament, new
+  information structure): a fixed reading spine — verdict → numbered briefing sections
+  (key metrics / executive summary / core logic / charts / key points / conflicts /
+  quotes) → collapsed chapter cards → a visually quiet appendix (source files, file
+  relations, distillation check). One page now has exactly **one** class of big numbers:
+  document stats (pages / words / minutes) are demoted to a single masthead line — with a
+  "source ≈ 62 min → this page ≈ 7 min" payoff note — leaving `highlights` as the only
+  large figures.
+- **Key points are tiered**: high-importance items get a featured list with a vermilion
+  edge; the rest collapse into a compact two-column list. Conflicts render positions
+  side-by-side with the resolution row beneath. Source badges shrink to one unified
+  minimal style; number highlighting is restricted to the verdict, summary, and featured
+  key points instead of the whole page.
+- **Chart palette replaced** with five colors validated for lightness band, chroma floor,
+  color-vision-deficiency separation, and contrast on the paper surface (the old dark teal
+  and green read as gray and failed validation).
+- Search and importance/source filters moved into a collapsible sidebar tool section; the
+  sidebar now leads with the numbered briefing nav and the chapter tree.
+- `SKILL.md` and `references/` updated throughout (stage-0 third question, one-liner
+  guidance, concepts-inventory and fact-check contracts, reconciliation discipline).
+
+### Fixed
+- **Body text wrapped long before the available width** — the old template clamped prose
+  to a 74-ch measure column; the verdict, summary, paragraphs, and tables now use the full
+  content width (the summary flows into balanced columns on wide screens instead).
+
 ## [0.2.0] — 2026-07-06
 
 A trust-and-polish release. The previous version *claimed* traceable sourcing and offline
@@ -78,5 +138,6 @@ scanned PDFs), cross-file consolidation with conflict surfacing, an AI-authored 
 IR compiled by a deterministic renderer into a single-file `dashboard.html` with the "paper"
 skin, adversarial fact-check, and a distillation report.
 
+[1.0.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v1.0.0
 [0.2.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v0.2.0
 [0.1.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v0.1.0
