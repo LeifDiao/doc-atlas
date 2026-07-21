@@ -4,7 +4,7 @@
 > HTML / EPUB / Markdown…) into a single, polished, offline, self-contained visual
 > dashboard.**
 
-🌏 [中文版](./README_zh.md) · 🖥 [Live page](https://leifdiao.github.io/doc-atlas/) · 🧩 [Sample dashboard](https://leifdiao.github.io/doc-atlas/sample-dashboard.html) · 📝 [Changelog](./CHANGELOG.md) · ⚖️ [License](./LICENSE)
+🌏 [中文版](./README_zh.md) · 🖥 [Live page](https://lemomo-ai.github.io/doc-atlas/) · 🧩 [Sample dashboard](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html) · 📝 [Changelog](./CHANGELOG.md) · ⚖️ [License](./LICENSE)
 
 > **中文简介：** 把一份或多份文档梳理整合成一个精美、离线可开的单文件可视化信息面板的 Claude Code 技能。左侧统一目录树，右侧是一条固定阅读主线（一句话定论 / 关键指标卡 / 大尺寸逻辑关系图 / 图表 / 冲突对照 / 折叠章节详情），每条结论都能溯源回「哪个文件第几页」。完整中文文档 → [README_zh.md](./README_zh.md)
 
@@ -98,7 +98,7 @@ Normalization uses [markitdown](https://github.com/microsoft/markitdown), which 
 ## Install
 
 ```bash
-git clone https://github.com/LeifDiao/doc-atlas.git ~/.claude/skills/doc-atlas
+git clone https://github.com/lemomo-ai/doc-atlas.git ~/.claude/skills/doc-atlas
 ```
 
 Once installed, trigger it in natural language from **the folder that holds your documents**
@@ -111,7 +111,7 @@ cannot parse. See [INSTALL.md](INSTALL.md).
 
 Open [`examples/example-dashboard.html`](examples/example-dashboard.html) directly in a
 browser for a finished sample dashboard, or view the
-[sample dashboard online](https://leifdiao.github.io/doc-atlas/sample-dashboard.html).
+[sample dashboard online](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html).
 
 ## Project structure
 

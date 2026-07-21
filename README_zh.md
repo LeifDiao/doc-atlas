@@ -2,7 +2,7 @@
 
 > **把一份或多份文档（PDF / Word / PPT / Excel / HTML / EPUB / Markdown…）梳理整合成一个精美的、离线可开的单文件可视化信息面板的 Claude Code 技能。**
 
-🌏 [English](./README.md) · 🖥 [在线页面](https://leifdiao.github.io/doc-atlas/) · 🧩 [看样例面板](https://leifdiao.github.io/doc-atlas/sample-dashboard.html) · 📝 [更新日志](./CHANGELOG.md) · ⚖️ [许可](./LICENSE)
+🌏 [English](./README.md) · 🖥 [在线页面](https://lemomo-ai.github.io/doc-atlas/) · 🧩 [看样例面板](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html) · 📝 [更新日志](./CHANGELOG.md) · ⚖️ [许可](./LICENSE)
 
 > 🆕 **v1.0.0** — 用 **Claude Fable 5** 从头翻新：全新「纸本简报」UI（首屏一句话定论）、目标驱动的炼化（开工先问你**想从文档里得到什么**，重要性按它来分级）、可信度指标从"自报"升级为"对账 ground truth"。详见[更新日志](./CHANGELOG.md)。
 
@@ -42,14 +42,14 @@
 ## 安装
 
 ```bash
-git clone https://github.com/LeifDiao/doc-atlas.git ~/.claude/skills/doc-atlas
+git clone https://github.com/lemomo-ai/doc-atlas.git ~/.claude/skills/doc-atlas
 ```
 
 装好后，在**装着文档的文件夹**里用自然语言触发（「帮我梳理这些文档/生成面板」）或 `/doc-atlas`。**首次使用**会在征得你同意后自动安装解析依赖（markitdown + PyMuPDF，约 290MB，装进隔离 `.venv`，之后复用）；不同意则不安装、也无法解析。详见 [INSTALL.md](INSTALL.md)。
 
 ## 先看效果
 
-浏览器直接打开 [`examples/example-dashboard.html`](examples/example-dashboard.html) 就是一份成品面板示例，或在线看 [样例面板](https://leifdiao.github.io/doc-atlas/sample-dashboard.html)。
+浏览器直接打开 [`examples/example-dashboard.html`](examples/example-dashboard.html) 就是一份成品面板示例，或在线看 [样例面板](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html)。
 
 ## 目录结构
 

@@ -138,6 +138,6 @@ scanned PDFs), cross-file consolidation with conflict surfacing, an AI-authored 
 IR compiled by a deterministic renderer into a single-file `dashboard.html` with the "paper"
 skin, adversarial fact-check, and a distillation report.
 
-[1.0.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v1.0.0
-[0.2.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v0.2.0
-[0.1.0]: https://github.com/LeifDiao/doc-atlas/releases/tag/v0.1.0
+[1.0.0]: https://github.com/lemomo-ai/doc-atlas/releases/tag/v1.0.0
+[0.2.0]: https://github.com/lemomo-ai/doc-atlas/releases/tag/v0.2.0
+[0.1.0]: https://github.com/lemomo-ai/doc-atlas/releases/tag/v0.1.0

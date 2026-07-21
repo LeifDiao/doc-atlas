@@ -3,7 +3,7 @@
 克隆到你的用户级技能目录即可：
 
 ```bash
-git clone https://github.com/LeifDiao/doc-atlas.git ~/.claude/skills/doc-atlas
+git clone https://github.com/lemomo-ai/doc-atlas.git ~/.claude/skills/doc-atlas
 ```
 
 **解析依赖不打包进仓库，也不用你手动装。** 首次使用本技能时，它会检查 markitdown + PyMuPDF（约 290MB）是否就绪；没装会**先征求你同意再安装**（建一个隔离 `.venv`：有 `uv` 用 uv，没有则回退 `python3 -m venv`，需要 python ≥ 3.10，1–2 分钟，之后复用）。**不同意就不会装**，但也就无法解析文档。
