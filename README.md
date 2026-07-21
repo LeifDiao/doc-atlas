@@ -1,168 +1,92 @@
 # Doc Atlas
 
-> **A Claude Code skill that distills one or more documents (PDF / Word / PPT / Excel /
-> HTML / EPUB / Markdown…) into a single, polished, offline, self-contained visual
-> dashboard.**
+> **把一份或多份文档（PDF / Word / PPT / Excel / HTML / EPUB / Markdown…）梳理整合成一个精美的、离线可开的单文件可视化信息面板的 Claude Code 技能。**
 
-🌏 [中文版](./README_zh.md) · 🖥 [Live page](https://lemomo-ai.github.io/doc-atlas/) · 🧩 [Sample dashboard](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html) · 📝 [Changelog](./CHANGELOG.md) · ⚖️ [License](./LICENSE)
+🌏 [English](./README_en.md) · 🖥 [在线页面](https://lemomo-ai.github.io/doc-atlas/) · 🧩 [看样例面板](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html) · 📝 [更新日志](./CHANGELOG.md) · ⚖️ [许可](./LICENSE)
 
-> **中文简介：** 把一份或多份文档梳理整合成一个精美、离线可开的单文件可视化信息面板的 Claude Code 技能。左侧统一目录树，右侧是一条固定阅读主线（一句话定论 / 关键指标卡 / 大尺寸逻辑关系图 / 图表 / 冲突对照 / 折叠章节详情），每条结论都能溯源回「哪个文件第几页」。完整中文文档 → [README_zh.md](./README_zh.md)
-
-<img width="2082" height="1177" alt="Screenshot 2026-07-10 at 10 26 55 AM" src="https://github.com/user-attachments/assets/1fd4d2b6-3a50-40c7-8073-1e4cd1b3976d" />
-
-> 🆕 **v1.0.0** — renewed end-to-end with **Claude Fable 5**: a redesigned "paper briefing"
-> UI with a one-sentence verdict up top, goal-driven distillation (it now asks *what you
-> want out of the documents* and grades importance against that), and trust metrics that
-> are audited against ground truth instead of self-reported. Details in the
-> [changelog](./CHANGELOG.md).
+> 🆕 **v1.0.0** — 用 **Claude Fable 5** 从头翻新：全新「纸本简报」UI（首屏一句话定论）、目标驱动的炼化（开工先问你**想从文档里得到什么**，重要性按它来分级）、可信度指标从"自报"升级为"对账 ground truth"。详见[更新日志](./CHANGELOG.md)。
 
 ---
 
-A left-hand unified table-of-contents tree; on the right, a fixed briefing spine: **a
-one-sentence verdict (The Bottom Line)**, first-screen key-metric cards, an executive
-summary, a **large logic / relationship diagram (the centerpiece — click to zoom)**, data
-charts (Chart.js), tiered key points, conflict comparisons, collapsed chapter details, and
-a quiet appendix (source files / relations / distillation check). Every claim carries a
-source badge and traces back to *which file, which page*. On each run it scans first, then
-**confirms the dashboard language, file selection, and your reading goal in a single
-prompt** — the whole distillation is graded against the question you actually brought.
+左侧是统一目录树，右侧是一条固定阅读主线：**一句话定论（The Bottom Line）**、首屏关键指标卡、执行摘要、**大尺寸逻辑/关系图（核心卖点，可点击放大）**、数据图表（Chart.js）、分级核心要点、冲突对照、折叠的章节详情，最后是降调的附录（源文件/文件关系/炼化体检）。一切结论都带来源角标，可溯源回「哪个文件第几页」。运行时先扫描、再**一次性与你确认输出语言、纳入哪些文件、以及你的阅读目标**——整份炼化对着你真正带来的问题做。
 
-Three core pursuits: **① highly distilled** (the dashboard is enough — no need to open the
-source), **② accurate and traceable** (zero hallucination, honest "unverified" flags, run
-through an adversarial fact-check whose per-claim findings render in the appendix), and
-**③ the logic diagram is the star** (turn the core causality / relationships into a
-prominent, large diagram).
+三条核心追求：**① 高度炼化**（看面板就够、不必翻原文）、**② 准确可溯**（零幻觉、不确定就诚实标注、过一道对抗式核查且逐条结论可在附录展开查看）、**③ 逻辑图是主角**（把核心因果/关系做成醒目大图）。
 
-## What it does
+## 它能做什么
 
-- **Multi-format normalization** — any document is first converted to a Markdown
-  intermediate layer (`content.md` + `assets/` + `meta.json`); **PDFs get a per-page anchor
-  `<!-- [doc-atlas] p.N -->` so every cited page number has a machine basis**; **tables are
-  extracted row × column to keep numeric columns intact**; scanned PDFs fall back to OCR
-  automatically; unchanged sources are skipped incrementally.
-- **Cross-file consolidation** — multiple files are de-duplicated, conflicts are surfaced
-  (when numbers / dates / conclusions disagree, they are listed explicitly rather than
-  silently picking one), gaps are filled in, and file relationships are inferred — not a
-  file-by-file summary.
-- **Highly distilled + trustworthy** — a three-layer reading model (verdict & overview /
-  key points / detail), first-screen metric cards, a **distillation report** (coverage /
-  compression ratio / share still to verify — thresholds machine-enforced and **reconciled
-  against the workspace ground truth** by `validate_model.py`), and an **adversarial
-  fact-check** (refute against the source, recompute derived numbers) whose per-claim
-  verdicts render as an expandable table in the appendix.
-- **Structured rendering** — the AI only produces a structured `model.json`, which passes
-  a machine validation gate (structure / cross-references / page bounds / distillation
-  thresholds) and is then compiled by a deterministic renderer into a single-file
-  `dashboard.html` (images inlined as base64; **Chart.js / Mermaid inlined too — zero
-  external requests, truly opens offline**).
-- **A "paper briefing" skin** — warm rice-paper + blue ink (vermilion kept for emphasis /
-  risk) with a fixed reading spine: verdict → numbered briefing sections → collapsed
-  chapters → a visually quiet appendix. One page has exactly one class of big numbers
-  (the key metrics); document stats shrink to a masthead line ("source ≈ 62 min → this
-  page ≈ 7 min"); prose uses the full content width.
-- **Interaction** — one-click "briefing only / expand all", click-to-zoom diagrams,
-  full-text search (highlight + jump, auto-expanding the matched chapter), a collapsible
-  TOC tree with scroll highlighting, importance / source filters tucked into a sidebar
-  tool drawer, and a Chinese / English UI that follows the language you chose.
+- **多格式归一化** — 任意文档先转成 Markdown 中间层（`content.md` + `assets/` + `meta.json`）；**PDF 逐页插入页锚 `<!-- [doc-atlas] p.N -->`，每条结论的页码有机器依据**；**表格按行×列结构化抽取保住数值列**；扫描版 PDF 自动走 OCR 回退；源文件未变自动增量跳过。
+- **跨文件梳理合并** — 多文件自动去重、识别冲突（数字/日期/结论不一致时显式列出而非静默选一个）、互补整合、判断文件关系，而不是逐文件摘要。
+- **高度炼化 + 可信** — 三层阅读模型（定论与概览/要点/细节）、首屏关键指标卡、**炼化体检表**（覆盖率/压缩比/待核实占比，由 `validate_model.py` 机器强制执行阈值，**并与 workspace 的 ground truth 对账**——页数不符直接报错）、**对抗式事实核查**（回原件证伪、验算派生数字），逐条核查结论在面板附录渲染成可展开的明细表。
+- **结构化渲染** — AI 只产出结构化 `model.json`，渲染前先过机器校验闸（结构/交叉引用/页码越界/炼化阈值），再由确定性渲染器编译成单文件 `dashboard.html`（图片 base64 内嵌，**Chart.js / Mermaid 整体内联，零外链、断网可开**）。
+- **「纸本简报」皮肤** — 暖米纸 + 蓝色墨（重点/风险保留朱红），信息结构固定为一条主线：定论 → 编号简报区 → 折叠章节 → 降调附录。一页只有一种大数字（关键指标）；文档统计缩成报头一行小字（「原文约 62 分钟 → 本页约 7 分钟读完」）；正文占满内容宽度。
+- **交互** — 「只看简报 / 展开全文」一键切换、关系图点击放大、全文搜索（高亮+跳转，自动展开命中章节）、目录树折叠 + 滚动高亮、重要度/来源筛选收进侧栏工具抽屉、中英界面随选定语言切换。
 
-## Supported formats
+## 支持的格式
 
-Normalization uses [markitdown](https://github.com/microsoft/markitdown), which supports:
+归一化用 [markitdown](https://github.com/microsoft/markitdown)，支持：
 
-- **PDF** (incl. scanned → OCR fallback), **Word `.docx`**, **PowerPoint `.pptx`**,
-  **Excel `.xlsx`**
-- **HTML**, **EPUB**, **Markdown `.md`**, **plain text `.txt`**, **CSV / JSON / XML**
+- **PDF**（含扫描版 → OCR 回退）、**Word `.docx`**、**PowerPoint `.pptx`**、**Excel `.xlsx`**
+- **HTML**、**EPUB**、**Markdown `.md`**、**纯文本 `.txt`**、**CSV / JSON / XML**
 
-> Legacy binary formats (`.doc` / `.ppt` / `.xls`, pre-2007) may not parse directly in
-> markitdown — re-save them as a modern format (`.docx`, etc.) in Office / LibreOffice
-> first.
+> 旧版二进制格式（`.doc` / `.ppt` / `.xls`，2007 前）markitdown 可能无法直接解析，先用 Office/LibreOffice 另存为新格式（`.docx` 等）再处理。
 
-## Workflow (six steps)
+## 工作流（六步）
 
-0. **Scan + one-shot confirmation** — scan the current folder, list candidate documents,
-   then confirm **the dashboard language, which files to include, and your reading goal in
-   a single prompt** (the goal drives importance grading, metric selection, and the
-   verdict);
-1. **Normalize** — each file → `workspace/<name>/{content.md, assets/, meta.json}` (PDFs
-   get per-page anchors; tables extracted structurally to keep numeric columns);
-2. **Consolidate (the core)** — de-duplicate / detect conflicts / complement across files,
-   keep an auditable concepts inventory (`_concepts.jsonl`), reassemble into `model.json`,
-   and fill in the distillation report + a second completeness critique;
-3. **Fact-check (adversarial)** — for outward-facing / high-risk documents, dispatch a
-   subagent to refute against the source and recompute derived numbers; findings land in
-   `factcheck.json` and render as a per-claim table in the dashboard appendix;
-4. **Render** — after the `validate_model.py` gate, `model.json (+ workspace)` → single-file `dashboard.html` (zero external links);
-5. **Self-check & deliver** — a headless Playwright check for errors + spot-checking
-   sources, then walk you through the distillation report / fact-check findings.
+0. **扫描 + 一次性确认** — 先扫描当前文件夹列出候选文档，再一次性与你确认**输出语言 + 纳入哪些文件 + 阅读目标**（目标驱动重要性分级、指标取舍与定论）；
+1. **归一化** — 每个文件 → `workspace/<name>/{content.md, assets/, meta.json}`（PDF 逐页页锚 + 表格结构化抽取保数值列）；
+2. **梳理合并（核心）** — 跨文件去重 / 识冲突 / 互补，维护可审计的概念清单（`_concepts.jsonl`），重组成 `model.json`，并填炼化体检 + 完整性批判第二遍；
+3. **事实核查（对抗式）** — 对外/高风险文档派 subagent 回原件证伪、验算派生数字，逐条记录落 `factcheck.json` 并在面板附录渲染成明细表；
+4. **渲染** — 过 `validate_model.py` 机器校验后，`model.json (+workspace)` → 单文件 `dashboard.html`（零外链）；
+5. **自检交付** — playwright 无头校验无报错 + 抽查溯源，并把炼化体检/核查结论讲给你。
 
-## Install
+## 安装
 
 ```bash
 git clone https://github.com/lemomo-ai/doc-atlas.git ~/.claude/skills/doc-atlas
 ```
 
-Once installed, trigger it in natural language from **the folder that holds your documents**
-("help me make sense of these docs / build a dashboard") or with `/doc-atlas`. **On first
-use** it installs the parsing dependencies after asking your consent (markitdown + PyMuPDF,
-~290 MB, into an isolated `.venv`, reused afterward); decline and it installs nothing and
-cannot parse. See [INSTALL.md](INSTALL.md).
+装好后，在**装着文档的文件夹**里用自然语言触发（「帮我梳理这些文档/生成面板」）或 `/doc-atlas`。**首次使用**会在征得你同意后自动安装解析依赖（markitdown + PyMuPDF，约 290MB，装进隔离 `.venv`，之后复用）；不同意则不安装、也无法解析。详见 [INSTALL.md](INSTALL.md)。
 
-## See it first
+## 先看效果
 
-Open [`examples/example-dashboard.html`](examples/example-dashboard.html) directly in a
-browser for a finished sample dashboard, or view the
-[sample dashboard online](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html).
+浏览器直接打开 [`examples/example-dashboard.html`](examples/example-dashboard.html) 就是一份成品面板示例，或在线看 [样例面板](https://lemomo-ai.github.io/doc-atlas/sample-dashboard.html)。
 
-## Project structure
+## 目录结构
 
 ```
 doc-atlas/
-├── SKILL.md                  skill entry point (the workflow)
-├── INSTALL.md                install notes
+├── SKILL.md                  技能主入口（六步工作流）
+├── INSTALL.md                安装说明
 ├── scripts/
-│   ├── scan_docs.py          stage 0: scan candidate documents
-│   ├── bootstrap.sh          create .venv + install dependencies
-│   ├── normalize.py          stage 1: document → content.md/assets/meta.json (PDF page anchors)
-│   ├── validate_model.py     stage-2 gate: structure / cross-refs / page bounds / thresholds
-│   ├── render_dashboard.py   stage 3: model.json → single-file dashboard.html
-│   ├── build_examples.sh     regenerate both sample dashboards from example-model.json
-│   └── selfcheck.py          stage 4: headless Playwright self-check
-├── templates/dashboard.html  fixed front-end template (inlined CSS/JS)
-├── templates/vendor/         inlined copies of Chart.js / Mermaid (MIT)
-├── tests/                    pytest unit + integration smoke tests
-├── schema/model.schema.json  JSON Schema for model.json (draft-07)
-├── references/               stage-2 consolidation guide + model.json spec
-└── examples/                 full-feature sample model.json + finished dashboard
+│   ├── scan_docs.py          阶段零：扫描候选文档
+│   ├── bootstrap.sh          建 .venv + 装依赖
+│   ├── normalize.py          阶段一：文档 → content.md/assets/meta.json（PDF 页锚）
+│   ├── validate_model.py     阶段二末尾：结构/交叉引用/页码/阈值机器校验
+│   ├── render_dashboard.py   阶段三：model.json → 单文件 dashboard.html
+│   ├── build_examples.sh     从 example-model.json 重新生成两份示例面板
+│   └── selfcheck.py          阶段四：playwright 无头自检
+├── templates/dashboard.html  固定前端模板（内联 CSS/JS）
+├── templates/vendor/         内联用的 Chart.js / Mermaid 副本（MIT）
+├── tests/                    pytest 单测 + 集成冒烟
+├── schema/model.schema.json  model.json 的 JSON Schema（draft-07）
+├── references/               阶段二梳理指南 + model.json 说明
+└── examples/                 全特性示例 model.json + 成品面板
 ```
 
-## Runtime dependencies
+## 运行依赖
 
-- **Normalization:** on first use, with your consent, it installs
-  `markitdown[pdf,docx,pptx,xlsx,xls]` + `pymupdf` (~290 MB into an isolated `.venv`, reused
-  afterward). The venv is created with `uv` when available, falling back to
-  `python3 -m venv` (python ≥ 3.10); OCR fallback for scanned PDFs can optionally use
-  `ocrmypdf`.
-- **Rendering / validation:** any system `python3` (pure stdlib).
-- **Self-check (optional):** `playwright` — install into the `.venv` via
-  `bash scripts/bootstrap.sh --with-selfcheck`; selfcheck picks it up automatically and
-  degrades to a static check when unavailable.
+- **归一化**：首次经你同意装 `markitdown[pdf,docx,pptx,xlsx,xls]` + `pymupdf`（约 290MB，装进隔离 `.venv`，之后复用）。建 venv 优先用 `uv`，没有 uv 自动回退 `python3 -m venv`（需要 python ≥ 3.10）；扫描版 PDF 的 OCR 回退可选装 `ocrmypdf`。
+- **渲染 / 校验**：任意系统 `python3`（纯标准库）。
+- **自检（可选）**：`playwright`——`bash scripts/bootstrap.sh --with-selfcheck` 可装进 `.venv`，selfcheck 会自动使用；两处都没有时降级为静态检查。
 
-## Design
+## 设计
 
-The AI writes an intermediate representation (`model.json`) and the renderer emits the HTML
-— the AI never hand-writes HTML, so every run is structurally stable, headless-checkable,
-and token-efficient. Right-side modules render **only when there is data**, and each chapter
-is freely composed from ordered "blocks" (paragraph / callout / key points / quote / diagram
-/ chart / table / image / subsections), balancing stability and flexibility.
+AI 写中间表示（`model.json`），渲染器出 HTML —— AI 从不手写 HTML，所以每次产出结构稳定、可无头自检、省 token。右侧模块「有数据才渲染」，每个章节由有序「区块」自由编排（段落 / 提示框 / 要点 / 引用 / 逻辑图 / 图表 / 表格 / 图片 / 子节点），兼顾稳定与灵活。
 
-## Contributing
+## 参与贡献
 
-Issues and PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md). Hold the line that the AI
-produces `model.json` and the renderer produces HTML; change rendering in
-`render_dashboard.py` + `templates/dashboard.html`, and keep `schema/model.schema.json` and
-`references/` in sync when the structure changes.
+欢迎提 Issue 和 PR——见 [CONTRIBUTING.md](./CONTRIBUTING.md)。AI 产出 `model.json`、渲染器出 HTML 这条边界要守住；改渲染就改 `render_dashboard.py` + `templates/dashboard.html`，改结构就同步 `schema/model.schema.json` 和 `references/`。
 
-## License
+## 许可
 
-Released under [CC BY-NC 4.0](./LICENSE): free for personal / educational / research and
-other non-commercial use; commercial use requires a separate license (leifdiao@gmail.com).
+以 [CC BY-NC 4.0](./LICENSE) 发布：个人 / 教育 / 研究等非商业用途免费，商业用途需单独授权（leifdiao@gmail.com）。
