@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -289,7 +289,7 @@ footer a{color:var(--t3);font-weight:500}footer a:hover{color:var(--blue)}
 function applyLang(zh){document.body.classList.toggle('zh',zh);document.documentElement.lang=zh?'zh':'en';}
 function toggleLang(){var zh=!document.body.classList.contains('zh');try{localStorage.setItem('da-lang',zh?'zh':'en');}catch(e){}applyLang(zh);}
 (function(){var s=null;try{s=localStorage.getItem('da-lang');}catch(e){}
- if(s===null){s='en';}
+ if(s===null){s='zh';}
  applyLang(s==='zh');})();
 </script>
 </body>
